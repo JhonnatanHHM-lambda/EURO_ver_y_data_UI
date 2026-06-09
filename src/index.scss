@@ -1,0 +1,136 @@
+@use './styles/variables' as *;
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+
+body {
+  font-family: $font-sans;
+  background: var(--bg-page);
+  color: var(--fg1);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+// ── Tema oscuro (por defecto) ────────────────────────────────────────────────
+:root {
+  --accent:       #6366f1;
+  --accent2:      #8b5cf6;
+  --accent-h:     #818cf8;
+  --accent2-h:    #a78bfa;
+  --amarillo:     #FFE302;
+  --euro-azul:    #27348B;
+
+  --fg1:          #ffffff;
+  --fg2:          rgba(255,255,255,0.75);
+  --fg3:          rgba(255,255,255,0.55);
+  --fg4:          rgba(255,255,255,0.30);
+
+  --surface:      rgba(255,255,255,0.04);
+  --surface2:     rgba(255,255,255,0.07);
+  --border:       rgba(255,255,255,0.10);
+  --border2:      rgba(255,255,255,0.16);
+
+  --bg-page:      #0a0a0d;
+  --bg-sidebar:   rgba(8,10,45,0.94);
+  --bg-topbar:    rgba(12,11,18,0.75);
+  --bg-modal:     #1a1a2e;
+  --bg-input:     rgba(255,255,255,0.06);
+  --bg-input-focus: rgba(255,255,255,0.09);
+  --bg-hover:     rgba(255,255,255,0.06);
+  --bg-hover2:    rgba(255,255,255,0.10);
+  --bg-active:    linear-gradient(100deg, rgba(99,102,241,0.22), rgba(139,92,246,0.14));
+
+  --card-shadow:  0 8px 32px rgba(0,0,0,0.35);
+  --card-inset:   inset 0 1px 0 rgba(255,255,255,0.06);
+  --modal-shadow: 0 24px 60px rgba(0,0,0,0.6);
+
+  --canvas-g1:    rgba(99,102,241,0.18);
+  --canvas-g2:    rgba(139,92,246,0.16);
+  --canvas-g3:    rgba(39,52,139,0.12);
+
+  --divider:      rgba(255,255,255,0.08);
+  --placeholder:  rgba(255,255,255,0.30);
+
+  --tbl-hover:    rgba(139,92,246,0.10);
+  --tbl-head-bg:  rgba(255,255,255,0.025);
+
+  --success:      #22c55e;
+  --success-bg:   rgba(34,197,94,0.12);
+  --danger:       #ef4444;
+  --danger-bg:    rgba(239,68,68,0.12);
+  --warning:      #f59e0b;
+  --warning-bg:   rgba(245,158,11,0.12);
+}
+
+// ── Tema claro (paleta cálida/parchment del diseño VYD) ─────────────────────
+:root[data-theme="light"] {
+  --fg1:          #1A1A1F;
+  --fg2:          #3A3935;
+  --fg3:          #6B6A60;
+  --fg4:          #B0AEA4;
+
+  --surface:      #F7F5EF;
+  --surface2:     #EFEDE6;
+  --border:       rgba(0,0,0,0.08);
+  --border2:      rgba(0,0,0,0.12);
+
+  --bg-page:      #ECE9E2;
+  --bg-sidebar:   rgba(247,245,239,0.95);
+  --bg-topbar:    rgba(236,233,226,0.88);
+  --bg-modal:     #F7F5EF;
+  --bg-input:     #ffffff;
+  --bg-input-focus: #ffffff;
+  --bg-hover:     rgba(0,0,0,0.05);
+  --bg-hover2:    rgba(0,0,0,0.09);
+  --bg-active:    linear-gradient(100deg, rgba(99,102,241,0.16), rgba(139,92,246,0.08));
+
+  --card-shadow:  0 2px 10px rgba(0,0,0,0.04);
+  --card-inset:   inset 0 1px 0 rgba(255,255,255,0.60);
+  --modal-shadow: 0 16px 40px rgba(0,0,0,0.14);
+
+  --canvas-g1:    rgba(99,102,241,0.04);
+  --canvas-g2:    rgba(139,92,246,0.03);
+  --canvas-g3:    rgba(39,52,139,0.02);
+
+  --divider:      rgba(0,0,0,0.08);
+  --placeholder:  rgba(0,0,0,0.30);
+
+  --tbl-hover:    rgba(99,102,241,0.06);
+  --tbl-head-bg:  #EFEDE6;
+}
+
+// ── Canvas de fondo ──────────────────────────────────────────────────────────
+.vyd-bg-canvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 900px 600px at 20% 10%, var(--canvas-g1), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 85% 95%, var(--canvas-g2), transparent 60%),
+    radial-gradient(ellipse 600px 400px at 60% 40%, var(--canvas-g3), transparent 55%),
+    var(--bg-page);
+  transition: background 0.3s ease;
+}
+
+// ── Spinner ──────────────────────────────────────────────────────────────────
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Animaciones ──────────────────────────────────────────────────────────────
+.fade-in { animation: fadeIn .25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+// ── Scrollbar ────────────────────────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg4); }

@@ -1,0 +1,69 @@
+// ── Euro VER & DATA — Design Tokens ─────────────────────────────────────────
+// Basado en el Manual de Marcación Euro + sistema de diseño VYD
+
+// Colores primarios Euro
+$euro-azul:       #27348B;
+$euro-azul-900:   #1a235f;
+$euro-azul-800:   #1e277a;
+$euro-amarillo:   #FFE302;
+$euro-blanco:     #FFFFFF;
+
+// Acentos del sistema (glass/dark theme)
+$vyd-accent:      #6366f1;
+$vyd-accent2:     #8b5cf6;
+$vyd-accent-h:    #818cf8;
+$vyd-accent2-h:   #a78bfa;
+
+// Gradiente principal
+$grad-accent:     linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+$grad-accent-h:   linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+$grad-azul:       linear-gradient(135deg, #27348B 0%, #1a235f 100%);
+
+// Surfaces (glass)
+$vyd-surface:     rgba(255, 255, 255, 0.04);
+$vyd-surface2:    rgba(255, 255, 255, 0.06);
+$vyd-border:      rgba(255, 255, 255, 0.10);
+$vyd-border2:     rgba(255, 255, 255, 0.16);
+
+// Foreground sobre oscuro
+$vyd-fg1:         #ffffff;
+$vyd-fg2:         rgba(255, 255, 255, 0.75);
+$vyd-fg3:         rgba(255, 255, 255, 0.55);
+$vyd-fg4:         rgba(255, 255, 255, 0.30);
+
+// Fondos
+$bg-page:         #0a0a0d;
+$bg-sidebar:      rgba(16, 15, 24, 0.78);
+$bg-topbar:       rgba(12, 11, 18, 0.72);
+
+// Semánticos
+$c-success:       #22c55e;
+$c-success-bg:    rgba(34, 197, 94, 0.12);
+$c-warning:       #f59e0b;
+$c-warning-bg:    rgba(245, 158, 11, 0.12);
+$c-danger:        #ef4444;
+$c-danger-bg:     rgba(239, 68, 68, 0.12);
+$c-info:          #3b82f6;
+$c-muted:         #64748b;
+
+// Tipografía
+$font-sans:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-mono:       ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+
+// Breakpoints
+$bp-xl:           1200px;
+$bp-lg:           992px;
+$bp-md:           768px;
+$bp-sm:           576px;
+
+// Sidebar
+$sidebar-width:   264px;
+$sidebar-collapsed: 76px;
+$topbar-height:   73px;
+
+// Radii
+$radius-sm:       8px;
+$radius-md:       10px;
+$radius-lg:       14px;
+$radius-xl:       20px;
+$radius-full:     999px;

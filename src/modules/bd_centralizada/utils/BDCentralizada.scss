@@ -1,0 +1,298 @@
+@use '../../../styles/variables' as *;
+
+// ── Modal Acta de Carga ───────────────────────────────────────────────────────
+
+// Forzar fondo sólido en tema oscuro para que los elementos sean legibles
+:root:not([data-theme="light"]) {
+  .acta-modal {
+    background: #1a1f2e;
+    border-color: rgba(255,255,255,.12);
+  }
+  .acta-info-item {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.10);
+  }
+  .acta-info-lbl { color: rgba(255,255,255,.45); }
+  .acta-info-val { color: #f1f5f9; }
+  .acta-kpi {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.10);
+  }
+  .acta-kpi-lbl { color: rgba(255,255,255,.45); }
+  .acta-section-title { color: rgba(255,255,255,.5); }
+  .acta-field-lbl { color: rgba(255,255,255,.45); }
+  .acta-input {
+    background: rgba(255,255,255,.07);
+    border-color: rgba(255,255,255,.15);
+    color: #f1f5f9;
+    &::placeholder { color: rgba(255,255,255,.3); }
+    &:focus {
+      background: rgba(255,255,255,.11);
+      border-color: var(--accent);
+    }
+  }
+  .acta-canvas-wrap {
+    background: rgba(255,255,255,.05);
+    border-color: rgba(255,255,255,.20);
+    // El canvas dibuja con tinta negra pero se muestra invertido (blanco)
+    // visualmente. toDataURL() lee los píxeles reales → la firma guardada es negra.
+    .acta-canvas {
+      background: rgba(255,255,255,.04);
+      filter: invert(1);
+    }
+  }
+  .acta-limpiar {
+    background: rgba(30,35,50,.8);
+    border-color: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.5);
+  }
+  .acta-divider { background: rgba(255,255,255,.08); }
+  .acta-modal-footer {
+    background: rgba(255,255,255,.04);
+    border-color: rgba(255,255,255,.08);
+  }
+  .acta-ya-firmada {
+    background: rgba(34,197,94,.10);
+    border-color: rgba(34,197,94,.25);
+    color: #86efac;
+  }
+}
+
+.acta-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  animation: fadeIn .15s ease;
+}
+
+.acta-modal {
+  width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: $radius-lg;
+  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  display: flex; flex-direction: column;
+  animation: slideUp .18s ease;
+}
+
+.acta-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; font-size: 13.5px; font-weight: 700; flex-shrink: 0;
+  border-radius: $radius-lg $radius-lg 0 0;
+}
+.acta-modal-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  &:hover { background: rgba(255,255,255,.25); }
+}
+
+.acta-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.acta-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.acta-info-item {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 7px 10px; border-radius: 7px; background: var(--surface2);
+}
+.acta-info-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: .06em; color: var(--fg4); }
+.acta-info-val { font-size: 12px; color: var(--fg1); font-weight: 500;
+                 word-break: break-all; }
+
+.acta-kpis {
+  display: flex; gap: 8px;
+}
+.acta-kpi {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 10px 8px;
+  background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
+}
+.acta-kpi-num { font-size: 22px; font-weight: 900; }
+.acta-kpi-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: .06em; color: var(--fg4); }
+
+.acta-divider { height: 1px; background: var(--border); }
+
+.acta-ya-firmada {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 7px;
+  background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25);
+  font-size: 12px; color: var(--fg2);
+}
+
+.acta-section-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--fg4);
+}
+
+.acta-firmante-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.acta-field-lbl {
+  display: block; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--fg4);
+  margin-bottom: 5px;
+}
+.acta-input {
+  width: 100%; padding: 8px 11px; font-size: 13px;
+  background: var(--bg-input); border: 1.5px solid var(--border2);
+  border-radius: $radius-md; color: var(--fg1); outline: none;
+  transition: border-color .2s;
+  &:focus { border-color: var(--accent); }
+  &::placeholder { color: var(--fg4); }
+}
+
+.acta-canvas-wrap {
+  border: 1.5px solid var(--border2); border-radius: $radius-md;
+  background: var(--surface2); position: relative; overflow: hidden;
+
+  :root[data-theme="light"] & { background: #f8fafc; border-color: #d1d5db; }
+
+  .acta-canvas {
+    width: 100% !important; height: 140px !important;
+    display: block; cursor: crosshair;
+    touch-action: none;
+  }
+}
+.acta-limpiar {
+  position: absolute; top: 6px; right: 8px;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--fg4); background: var(--surface);
+  border: 1px solid var(--border2); border-radius: 6px; padding: 3px 8px;
+  cursor: pointer; transition: all .15s;
+  &:hover { color: #ef4444; border-color: rgba(239,68,68,.4); }
+}
+
+.acta-canvas-readonly {
+  cursor: default;
+  .acta-canvas { pointer-events: none; cursor: default; }
+}
+.acta-readonly-badge {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: #16a34a; padding: 5px 10px;
+  background: rgba(34,197,94,.08); border-top: 1px solid rgba(34,197,94,.2);
+}
+
+.acta-nota-lambda {
+  font-size: 11px; color: var(--fg4); line-height: 1.5;
+  padding: 8px 12px; border-radius: 7px;
+  background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.20);
+  b { color: var(--accent); }
+}
+
+.acta-modal-footer {
+  padding: 14px 18px; border-top: 1px solid var(--border);
+  background: var(--surface2); border-radius: 0 0 $radius-lg $radius-lg;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+}
+
+.bdc-lista { display: flex; flex-direction: column; gap: 10px; }
+
+.bdc-carga {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: $radius-lg; overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+  &:hover { border-color: var(--border2); }
+  &.revertida { opacity: .6; }
+}
+
+.bdc-carga-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 18px; cursor: pointer;
+  transition: background .12s;
+  &:hover { background: var(--bg-hover); }
+
+  @media (max-width: 767px) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 8px 10px;
+    padding: 12px 14px;
+
+    // Fila 1: info a todo el ancho
+    .bdc-carga-info {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      min-width: 0;
+    }
+
+    // Fila 2 izq: estadísticas
+    .bdc-carga-stats {
+      grid-column: 1;
+      grid-row: 2;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      align-self: center;
+    }
+
+    // Fila 2 der: botones + chevron
+    & > div:last-child {
+      grid-column: 2;
+      grid-row: 2;
+      justify-self: end;
+      align-self: center;
+      flex-wrap: nowrap;
+    }
+  }
+}
+
+.bdc-carga-info { flex: 1; min-width: 0; }
+.bdc-carga-archivo {
+  font-size: 13.5px; font-weight: 700; color: var(--fg1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 5px;
+  @media (max-width: 767px) { font-size: 12.5px; }
+}
+.bdc-carga-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.bdc-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; flex-shrink: 0;
+  &.origen   { background: rgba(99,102,241,.12); color: var(--accent); border: 1px solid rgba(99,102,241,.25); }
+  &.hoja     { background: rgba(34,197,94,.10); color: #16a34a; border: 1px solid rgba(34,197,94,.25); }
+  &.sede     { background: var(--bg-hover); border: 1px solid var(--border2); color: var(--fg3); }
+  &.revertida{ background: rgba(239,68,68,.10); color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+}
+
+.bdc-carga-stats { display: flex; align-items: center; gap: 12px; }
+.bdc-stat {
+  display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+  white-space: nowrap;
+  &.ok   { color: #16a34a; }
+  &.err  { color: #ef4444; }
+  &.mute { color: var(--fg4); }
+
+  @media (max-width: 767px) { font-size: 11px; gap: 4px; }
+}
+
+.bdc-carga-detalle { border-top: 1px solid var(--border); background: var(--surface2); }
+
+// ── Panel de errores dentro del historial ────────────────────────────────────
+.bdc-errores {
+  margin: 12px 16px; padding: 12px 14px;
+  background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.18);
+  border-radius: 10px;
+}
+.bdc-errores-titulo {
+  display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700;
+  color: #ef4444; margin-bottom: 10px;
+}
+.bdc-errores-grupo {
+  padding: 8px 10px; margin-bottom: 8px;
+  background: var(--surface); border-radius: 8px;
+  border: 1px solid var(--border);
+  &:last-child { margin-bottom: 0; }
+}
+.bdc-errores-grupo-header {
+  display: flex; justify-content: space-between; align-items: center;
+  border-left: 3px solid; padding-left: 8px; margin-bottom: 4px;
+}
+.bdc-fila-badge {
+  font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
+  background: rgba(239,68,68,.08); color: var(--fg2);
+  border: 1px solid rgba(239,68,68,.15); font-family: $font-mono;
+}
