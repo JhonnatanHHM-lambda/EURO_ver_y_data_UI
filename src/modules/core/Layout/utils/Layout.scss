@@ -1,0 +1,136 @@
+@use '../../../../styles/variables' as *;
+
+// ── Shell ─────────────────────────────────────────────────────────────────────
+.vyd-shell { position: relative; z-index: 1; min-height: 100vh; }
+
+.vyd-content-wrap {
+  margin-left: $sidebar-width;
+  transition: margin-left .25s cubic-bezier(.4,0,.2,1);
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+.vyd-shell.sb-collapsed .vyd-content-wrap { margin-left: $sidebar-collapsed; }
+
+.vyd-content { flex: 1; }
+
+// ── Área principal ────────────────────────────────────────────────────────────
+.vyd-main {
+  padding: 24px 28px 80px;
+  display: flex; flex-direction: column; gap: 18px;
+  width: 100%; max-width: 1400px;
+}
+
+// ── Panel genérico ────────────────────────────────────────────────────────────
+.vyd-panel {
+  background: var(--surface);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: $radius-lg; padding: 20px 22px;
+  box-shadow: var(--card-shadow), var(--card-inset);
+  transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+.vyd-panel-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; margin-bottom: 14px;
+}
+.vyd-panel-title { font-size: 14px; font-weight: 700; color: var(--fg1); transition: color .25s; }
+.vyd-panel-sub   { font-size: 11.5px; color: var(--fg3); margin-top: 2px; transition: color .25s; }
+
+// ── Botones pequeños ──────────────────────────────────────────────────────────
+.vyd-btn-sm {
+  padding: 10px 16px; border-radius: $radius-md; border: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  box-shadow: 0 4px 14px rgba(99,102,241,.35);
+  transition: transform .15s, box-shadow .15s;
+
+  &:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99,102,241,.5); }
+  &:active { transform: translateY(0); }
+
+  &.ghost {
+    background: var(--bg-hover); border: 1px solid var(--border2);
+    color: var(--fg2); box-shadow: none;
+    &:hover { background: var(--bg-hover2); color: var(--fg1); transform: none; box-shadow: none; }
+  }
+  &.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 14px rgba(239,68,68,.35);
+    &:hover { box-shadow: 0 6px 18px rgba(239,68,68,.5); }
+  }
+  svg { width: 15px; height: 15px; flex-shrink: 0; }
+}
+
+// ── Tags de estado ────────────────────────────────────────────────────────────
+.vyd-pill {
+  display: inline-block; font-size: 9.5px; font-weight: 800;
+  padding: 3px 10px; border-radius: 999px;
+  letter-spacing: .03em; text-transform: uppercase; white-space: nowrap;
+}
+.estado-activo  { background: rgba(34,197,94,.15);  color: #16a34a; border: 1px solid rgba(34,197,94,.3); }
+.estado-inactivo{ background: rgba(239,68,68,.15);  color: #dc2626; border: 1px solid rgba(239,68,68,.3); }
+
+:root[data-theme="light"] {
+  .estado-activo  { color: #15803d; background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.2); }
+  .estado-inactivo{ color: #b91c1c; background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.2); }
+  .vyd-btn-sm.ghost { background: #fff; border-color: rgba(0,0,0,.12); color: #3A3935;
+    &:hover { background: #F7F5EF; color: #1A1A1F; } }
+}
+
+// ── Page header ────────────────────────────────────────────────────────────────
+.vyd-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.vyd-page-title  {
+  font-size: 22px; font-weight: 900; color: var(--fg1); letter-spacing: -.02em;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 4px; transition: color .25s;
+}
+.vyd-page-sub { font-size: 12.5px; color: var(--fg3); transition: color .25s; }
+
+// ════════════════════════════════════════════════════════════════════════════
+// RESPONSIVE — Mobile-first breakpoints
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── Large desktop (1200px+) ─ default ya manejado arriba ──────────────────
+
+// ── Desktop normal (992-1199px) ──────────────────────────────────────────────
+@media (max-width: $bp-xl) {
+  .vyd-main { padding: 20px 22px 60px; }
+}
+
+// ── Tablet landscape (768-991px) ──────────────────────────────────────────────
+@media (max-width: $bp-lg) {
+  .vyd-main { padding: 18px 18px 60px; gap: 14px; }
+  .vyd-page-title { font-size: 19px; }
+}
+
+// ── Tablet portrait + mobile grande (576-767px) ─────────────────────────────
+@media (max-width: $bp-md) {
+  // Sidebar va como drawer — contenido ocupa toda la pantalla
+  .vyd-content-wrap,
+  .vyd-shell.sb-collapsed .vyd-content-wrap {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .vyd-main { padding: 14px 14px 70px; gap: 12px; max-width: 100%; }
+  .vyd-page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .vyd-page-title { font-size: 18px; }
+  .vyd-panel { padding: 16px 16px; border-radius: $radius-md; }
+}
+
+// ── Mobile pequeño (hasta 575px) ─────────────────────────────────────────────
+@media (max-width: $bp-sm) {
+  .vyd-main { padding: 10px 10px 70px; gap: 10px; }
+  .vyd-page-title { font-size: 16px; gap: 7px; }
+  .vyd-panel { padding: 12px 12px; }
+  .vyd-btn-sm { font-size: 11.5px; padding: 8px 12px; }
+
+  // Panel head en columna en pantallas muy pequeñas
+  .vyd-panel-head { flex-direction: column; gap: 10px; }
+}
+
+// ── Móvil muy pequeño (hasta 380px) ──────────────────────────────────────────
+@media (max-width: 380px) {
+  .vyd-main { padding: 8px 8px 60px; }
+  .vyd-btn-sm { padding: 7px 10px; font-size: 11px; }
+}

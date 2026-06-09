@@ -1,0 +1,245 @@
+// ── Modal Agregar / Nueva Casilla ─────────────────────────────────────────────
+.mar-overlay {
+  position: fixed; inset: 0; z-index: 52;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: marFadeIn .18s ease-out;
+}
+
+.mar-modal {
+  width: min(700px, 100%);
+  max-height: min(92vh, 920px);
+  background: rgba(20,18,30,.98);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.70);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: marSlideIn .2s cubic-bezier(.4,0,.2,1);
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.mar-header {
+  padding: 20px 22px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  box-shadow: inset 0 -2px 0 #FFE302;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  flex-shrink: 0;
+}
+.mar-title    { font-size: 15.5px; font-weight: 900; color: #fff; letter-spacing: -.02em; }
+.mar-subtitle { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 3px; }
+.mar-close {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+  color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  &:hover { background: rgba(255,255,255,.20); }
+}
+
+// ── Paso Búsqueda ─────────────────────────────────────────────────────────────
+.mar-busqueda {
+  padding: 22px 22px 18px;
+  flex: 1; overflow-y: auto;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
+}
+
+.mar-busqueda-hint {
+  font-size: 12.5px; color: rgba(255,255,255,.50); margin-bottom: 16px; line-height: 1.5;
+}
+
+.mar-search-wrap {
+  position: relative; display: flex; align-items: center;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16);
+  border-radius: 10px; padding: 0 14px; gap: 10px; margin-bottom: 14px;
+  transition: border-color .15s;
+  &:focus-within { border-color: rgba(99,102,241,.65); }
+}
+.mar-search-icon  { color: rgba(255,255,255,.40); flex-shrink: 0; }
+.mar-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: #fff; font-size: 13.5px; padding: 12px 0;
+  font-family: inherit;
+  &::placeholder { color: rgba(255,255,255,.30); }
+}
+.mar-search-spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.20); border-top-color: #a5b4fc;
+  animation: marSpin .7s linear infinite; flex-shrink: 0;
+}
+
+.mar-resultados {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;
+}
+
+.mar-resultado-item {
+  width: 100%; background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 10px; padding: 11px 14px;
+  cursor: pointer; text-align: left; transition: all .15s;
+  &:hover {
+    background: rgba(99,102,241,.15);
+    border-color: rgba(99,102,241,.45);
+  }
+}
+
+.mar-resultado-main {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+  color: #fff;
+}
+.mar-resultado-nombre { font-size: 13px; font-weight: 700; flex: 1; }
+.mar-resultado-doc    { font-size: 11px; color: rgba(255,255,255,.45); font-family: ui-monospace, monospace; }
+
+.mar-resultado-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 11px; color: rgba(255,255,255,.40); margin-left: 21px;
+}
+.mar-resultado-pill {
+  background: rgba(99,102,241,.25); color: #a5b4fc;
+  font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 4px;
+}
+.mar-add-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: #86efac; font-weight: 700; font-size: 11px; margin-left: auto;
+}
+
+.mar-no-resultados {
+  font-size: 12px; color: rgba(255,255,255,.35); text-align: center;
+  padding: 12px 0 8px;
+}
+
+.mar-btn-nueva {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 13px 16px; margin-top: 6px;
+  background: rgba(99,102,241,.12); border: 1px dashed rgba(99,102,241,.40);
+  border-radius: 10px; color: #a5b4fc;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s;
+  &:hover { background: rgba(99,102,241,.22); border-color: rgba(99,102,241,.65); }
+}
+
+// ── Paso Formulario ───────────────────────────────────────────────────────────
+.mar-form-header {
+  padding: 12px 22px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  background: rgba(255,255,255,.03);
+}
+.mar-volver {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: rgba(255,255,255,.50);
+  background: none; border: none; cursor: pointer; padding: 0;
+  transition: color .15s;
+  &:hover { color: rgba(255,255,255,.85); }
+}
+.mar-casilla-badge {
+  font-size: 11.5px; color: rgba(255,255,255,.55);
+  strong { color: #a5b4fc; }
+}
+
+.mar-body {
+  flex: 1; overflow-y: auto; padding: 18px 22px 8px;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
+}
+
+.mar-section-title {
+  font-size: 9.5px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase;
+  color: #c4b5fd; margin-bottom: 12px;
+  padding-bottom: 7px; border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.mar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.mar-field {
+  display: flex; flex-direction: column; gap: 5px;
+  &--span2 { grid-column: span 2; }
+}
+.mar-label    { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+.mar-required { color: #f87171; }
+
+.mar-input {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.13);
+  border-radius: 8px; padding: 9px 12px;
+  color: #fff; font-size: 13px; font-family: inherit;
+  outline: none; width: 100%; box-sizing: border-box; transition: border-color .15s;
+  &:focus  { border-color: rgba(99,102,241,.65); background: rgba(255,255,255,.09); }
+  &:read-only { background: rgba(255,255,255,.03); }
+}
+.mar-select    { cursor: pointer; option { background: #1e1b2e; color: #fff; } }
+.mar-textarea  { resize: vertical; min-height: 70px; line-height: 1.5; }
+.mar-field-note {
+  font-size: 10px; color: rgba(255,255,255,.35); font-style: italic;
+  display: block; margin-top: 3px; line-height: 1.4;
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────────
+.mar-footer {
+  padding: 14px 22px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  flex-shrink: 0; background: rgba(10,9,18,.50);
+}
+.mar-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border-radius: 9px; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none; transition: all .15s;
+  &--primary {
+    background: #6366f1; color: #fff;
+    &:hover:not(:disabled) { background: #4f46e5; }
+    &:disabled { opacity: .55; cursor: not-allowed; }
+  }
+  &--secondary {
+    background: rgba(255,255,255,.08); color: rgba(255,255,255,.80);
+    border: 1px solid rgba(255,255,255,.15);
+    &:hover:not(:disabled) { background: rgba(255,255,255,.14); }
+    &:disabled { opacity: .55; cursor: not-allowed; }
+  }
+}
+.mar-spinner {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.30); border-top-color: #fff;
+  animation: marSpin .7s linear infinite; display: inline-block;
+}
+
+// ── Animaciones ───────────────────────────────────────────────────────────────
+@keyframes marFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes marSlideIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes marSpin    { to { transform: rotate(360deg); } }
+
+// ── Tema claro ────────────────────────────────────────────────────────────────
+:root[data-theme="light"] {
+  .mar-modal    { background: #ffffff; border-color: rgba(0,0,0,.10); box-shadow: 0 20px 60px rgba(0,0,0,.18); }
+  .mar-header   { border-bottom-color: rgba(0,0,0,.08); }
+  .mar-title    { color: #1A1A1F; }
+  .mar-subtitle { color: #9B9A92; }
+  .mar-close    { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.10); color: #3A3935; &:hover { background: rgba(0,0,0,.12); } }
+  .mar-busqueda-hint { color: #6B6A60; }
+  .mar-search-wrap   { background: #f8f7f3; border-color: rgba(0,0,0,.14); }
+  .mar-search-input  { color: #1A1A1F; &::placeholder { color: #B0AEA4; } }
+  .mar-resultado-item { background: #fff; border-color: rgba(0,0,0,.09); &:hover { background: rgba(99,102,241,.06); border-color: rgba(99,102,241,.30); } }
+  .mar-resultado-nombre { color: #1A1A1F; }
+  .mar-resultado-meta   { color: #9B9A92; }
+  .mar-no-resultados    { color: #B0AEA4; }
+  .mar-btn-nueva        { background: rgba(99,102,241,.07); border-color: rgba(99,102,241,.25); color: #6366f1; &:hover { background: rgba(99,102,241,.14); } }
+  .mar-form-header { background: #f8f7f3; border-bottom-color: rgba(0,0,0,.07); }
+  .mar-volver      { color: #9B9A92; &:hover { color: #3A3935; } }
+  .mar-casilla-badge { color: #6B6A60; strong { color: #6366f1; } }
+  .mar-section-title { color: #6366f1; border-bottom-color: rgba(0,0,0,.07); }
+  .mar-label   { color: #9B9A92; }
+  .mar-input   { background: #f8f7f3; border-color: rgba(0,0,0,.14); color: #1A1A1F; &:focus { background: #fff; } option { background: #fff; color: #1A1A1F; } }
+  .mar-field-note { color: #B0AEA4; }
+  .mar-footer  { border-top-color: rgba(0,0,0,.07); background: rgba(240,239,234,.60); }
+  .mar-btn--secondary { background: rgba(0,0,0,.05); color: #3A3935; border-color: rgba(0,0,0,.12); &:hover:not(:disabled) { background: rgba(0,0,0,.10); } }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 520px) {
+  .mar-overlay { padding: 0; }
+  .mar-modal   { border-radius: 0; max-height: 100vh; height: 100vh; }
+  .mar-grid    { grid-template-columns: 1fr; }
+  .mar-field--span2 { grid-column: span 1; }
+}

@@ -1,0 +1,77 @@
+@use '../../../styles/variables' as *;
+
+.vyd-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.vyd-role-card { cursor: default; transition: border-color .2s; }
+.vyd-role-card:hover { border-color: rgba(99,102,241,.4); }
+
+.vyd-role-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+
+.vyd-role-icon {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25);
+  display: flex; align-items: center; justify-content: center; color: var(--accent);
+}
+
+.vyd-role-name { font-size: 14px; font-weight: 700; color: var(--fg1); transition: color .25s; }
+.vyd-role-meta { font-size: 11px; color: var(--fg3); margin-top: 3px; display: flex; align-items: center; gap: 5px; transition: color .25s; }
+.vyd-role-actions { margin-left: auto; display: flex; gap: 4px; }
+
+.vyd-role-perms { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.vyd-perm-chip {
+  font-size: 9.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px;
+  background: var(--bg-hover); border: 1px solid var(--border2);
+  color: var(--fg3); letter-spacing: 0;
+  &.more { background: rgba(99,102,241,.1); color: var(--accent); border-color: rgba(99,102,241,.3); }
+}
+
+// Permisos en modal
+.vyd-perms-section { margin-bottom: 8px; }
+.vyd-perms-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--fg3); margin-bottom: 14px;
+}
+.vyd-perms-group { margin-bottom: 18px; }
+.vyd-perms-group-lbl {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--fg4); padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+}
+.vyd-perms-list { display: flex; flex-direction: column; gap: 8px; }
+
+.vyd-perm-check {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  padding: 9px 12px; border-radius: 9px; border: 1px solid transparent;
+  transition: background .12s, border-color .12s;
+
+  &:hover { background: var(--bg-hover); }
+  &.checked { background: rgba(99,102,241,.08); border-color: rgba(99,102,241,.25); }
+}
+
+.vyd-check-box {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+  background: var(--bg-input); border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; color: var(--accent);
+
+  .vyd-perm-check.checked & {
+    background: var(--accent); border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(99,102,241,.4); color: #fff;
+  }
+}
+
+.vyd-perm-name { font-size: 13px; font-weight: 700; color: var(--fg1); display: block; transition: color .25s; }
+.vyd-perm-desc { font-size: 11.5px; color: var(--fg3); display: block; margin-top: 2px; line-height: 1.4; transition: color .25s; }
+.vyd-perm-code { font-size: 10.5px; color: var(--fg4); font-family: $font-mono; display: block; margin-top: 1px; }
+
+.vyd-perm-icon {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(99,102,241,.10); border: 1px solid rgba(99,102,241,.20);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  .vyd-perm-check.checked & { background: rgba(99,102,241,.18); }
+}

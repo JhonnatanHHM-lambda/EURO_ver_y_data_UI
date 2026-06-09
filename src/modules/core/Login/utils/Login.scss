@@ -1,0 +1,242 @@
+@use '../../../../styles/variables' as *;
+
+// ── Layout principal ──────────────────────────────────────────────────────────
+.vyd-auth {
+  position: relative; z-index: 1;
+  min-height: 100vh; display: flex;
+}
+
+// ── Panel izquierdo — marca (siempre oscuro) ──────────────────────────────────
+.vyd-auth-split-brand {
+  flex: 1; position: relative;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 64px 56px;
+  background: linear-gradient(145deg, #141836 0%, #0e1128 50%, #0a0c1a 100%);
+  border-right: 1px solid rgba(99,102,241,.15);
+  overflow: hidden;
+
+  @media (max-width: $bp-md) { display: none; }
+
+  // Círculos decorativos — inspirados en la referencia
+  .vyd-circle {
+    position: absolute; border-radius: 50%;
+    border: 1.5px solid rgba(99,102,241,.18);
+    pointer-events: none;
+
+    &.c1 { width: 520px; height: 520px; top: -160px;  left: -160px; border-color: rgba(99,102,241,.22); }
+    &.c2 { width: 380px; height: 380px; top:  -50px;  left:  -50px; border-color: rgba(139,92,246,.18); }
+    &.c3 { width: 260px; height: 260px; top:   40px;  left:   40px; background: rgba(99,102,241,.06); border: none; }
+    &.c4 { width: 480px; height: 480px; bottom:-200px; right: -180px; border-color: rgba(99,102,241,.14); }
+    &.c5 { width: 320px; height: 320px; bottom: -80px; right:  -60px; border-color: rgba(139,92,246,.10); }
+  }
+}
+
+.vyd-asb-logo {
+  width: 80px; height: 80px; border-radius: 50%; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 32px; position: relative; z-index: 1;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.25), 0 12px 36px rgba(0,0,0,.45);
+  overflow: hidden;
+}
+.vyd-asb-title {
+  font-size: 36px; font-weight: 900; letter-spacing: -.04em;
+  color: #fff; margin-bottom: 10px; position: relative; z-index: 1;
+  line-height: 1.1;
+}
+.vyd-asb-tagline {
+  font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.6);
+  max-width: 420px; margin-bottom: 48px; position: relative; z-index: 1;
+}
+.vyd-asb-feats {
+  list-style: none; display: flex; flex-direction: column; gap: 20px;
+  max-width: 420px; position: relative; z-index: 1;
+  li { display: flex; align-items: flex-start; gap: 14px; }
+  div { display: flex; flex-direction: column; gap: 3px; }
+  b { font-size: 13.5px; font-weight: 700; color: #fff; }
+  span { font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.5; }
+}
+.vyd-asb-fic {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(99,102,241,.15); border: 1px solid rgba(99,102,241,.3);
+  display: flex; align-items: center; justify-content: center; color: #a5b4fc;
+}
+.vyd-asb-foot {
+  position: absolute; bottom: 28px; left: 56px; z-index: 1;
+  font-size: 11px; color: rgba(255,255,255,.3);
+}
+
+// ── Panel derecho — formulario ────────────────────────────────────────────────
+.vyd-auth-formside {
+  width: 480px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px;
+  background: var(--bg-page);
+  transition: background .25s;
+
+  @media (max-width: $bp-md) {
+    width: 100%; min-height: 100vh;
+    padding: 40px 24px;
+    background: var(--bg-page);
+  }
+}
+
+.vyd-auth-card {
+  width: 100%; max-width: 380px;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+// Logo en el card del formulario
+.vyd-auth-logo {
+  width: 72px; height: 72px; border-radius: 50%; background: #fff;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  overflow: hidden;
+}
+
+.vyd-auth-brand {
+  margin-bottom: 32px;
+  h1 { font-size: 22px; font-weight: 900; letter-spacing: -.03em; color: var(--fg1); margin-bottom: 6px; transition: color .25s; }
+  p  { font-size: 13.5px; color: var(--fg3); line-height: 1.5; transition: color .25s; }
+}
+
+// ── Campos ────────────────────────────────────────────────────────────────────
+.vyd-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.vyd-field label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--fg4); transition: color .25s;
+}
+
+.vyd-input-icon {
+  position: relative; display: flex; align-items: center;
+}
+.vyd-input-ic {
+  position: absolute; left: 12px; color: var(--fg4); pointer-events: none; flex-shrink: 0;
+}
+.vyd-input {
+  width: 100%; padding: 11px 14px;
+  background: var(--surface); border: 1.5px solid var(--border2);
+  border-radius: $radius-md; color: var(--fg1); font-size: 13.5px; outline: none;
+  transition: border-color .2s, background .25s, color .25s;
+  &::placeholder { color: var(--fg4); }
+  &:focus { border-color: var(--accent); background: var(--surface2); }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+  &.vyd-input-has-icon { padding-left: 38px; }
+}
+.vyd-input-password-wrap {
+  position: relative; display: flex; align-items: center;
+
+  .vyd-input-icon { flex: 1; }
+
+  .vyd-input { padding-right: 42px !important; }
+}
+.vyd-input-eye {
+  position: absolute; right: 12px; z-index: 2;
+  background: none; border: none; cursor: pointer;
+  color: var(--fg4); padding: 0; display: flex; transition: color .15s;
+  &:hover { color: var(--accent); }
+}
+
+// ── Botón principal ───────────────────────────────────────────────────────────
+.vyd-btn {
+  width: 100%; padding: 12px 20px; border-radius: $radius-md;
+  font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; transition: opacity .2s, transform .1s;
+  box-shadow: 0 4px 20px rgba(99,102,241,.4);
+  margin-top: 8px;
+  &:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+  &:active:not(:disabled) { transform: translateY(0); }
+  &:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+}
+.vyd-btn-ghost {
+  background: transparent; color: var(--fg3);
+  border: 1.5px solid var(--border2);
+  box-shadow: none;
+  &:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); opacity: 1; }
+}
+
+// ── Error ─────────────────────────────────────────────────────────────────────
+.vyd-auth-error {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 13px; border-radius: 9px; margin-bottom: 12px;
+  font-size: 12.5px; font-weight: 600;
+  background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.22); color: #ef4444;
+}
+
+// ── OTP ───────────────────────────────────────────────────────────────────────
+.vyd-otp-sent {
+  font-size: 13px; line-height: 1.6; color: var(--fg3); margin-bottom: 20px;
+  padding: 12px 14px; border-radius: 10px;
+  background: rgba(99,102,241,.07); border: 1px solid rgba(99,102,241,.18);
+  b { color: var(--accent); }
+  transition: color .25s;
+}
+.vyd-otp-row {
+  display: flex; gap: 10px; margin-bottom: 18px; justify-content: center;
+}
+.vyd-otp-cell {
+  width: 48px; height: 56px; border-radius: 12px; text-align: center;
+  font-size: 22px; font-weight: 800; color: var(--fg1);
+  background: var(--surface); border: 2px solid var(--border2); outline: none;
+  transition: border-color .2s, background .25s, color .25s;
+  caret-color: transparent;
+  &:focus { border-color: var(--accent); background: var(--surface2); }
+  &.filled { border-color: var(--accent); background: rgba(99,102,241,.08); }
+}
+.vyd-otp-resend {
+  text-align: center; font-size: 12.5px; color: var(--fg4); margin-bottom: 8px;
+}
+.vyd-otp-timer { color: var(--accent); font-weight: 700; }
+
+// ── Links ─────────────────────────────────────────────────────────────────────
+.vyd-auth-link {
+  color: var(--accent); font-weight: 600; font-size: 12.5px;
+  background: none; border: none; cursor: pointer; padding: 0;
+  text-decoration: underline; transition: opacity .15s;
+  &:hover { opacity: .8; }
+}
+
+.vyd-auth-meta {
+  margin-top: 28px; text-align: center;
+  font-size: 11px; color: var(--fg4); transition: color .25s;
+}
+
+// ── Separador ─────────────────────────────────────────────────────────────────
+.vyd-auth-sep {
+  display: flex; align-items: center; gap: 10px; margin: 20px 0;
+  span { font-size: 11px; color: var(--fg4); white-space: nowrap; }
+  &::before, &::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+}
+
+// ── Spinner en botón ──────────────────────────────────────────────────────────
+.vyd-btn-spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Tema: toggle flotante ──────────────────────────────────────────────────────
+.vyd-login-theme-btn {
+  position: fixed; top: 18px; right: 18px; z-index: 100;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.7); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px); transition: all .2s;
+  &:hover { background: rgba(255,255,255,.18); }
+  &.is-light {
+    background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.15); color: var(--fg3);
+    &:hover { background: rgba(0,0,0,.12); }
+  }
+}
+
+// ── Alerta recuperación OK ────────────────────────────────────────────────────
+.vyd-recuperar-ok {
+  text-align: center; padding: 8px 0;
+  .vyd-recuperar-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+  h2 { font-size: 18px; font-weight: 800; color: var(--fg1); margin-bottom: 8px; transition: color .25s; }
+  p { font-size: 13px; color: var(--fg3); line-height: 1.6; margin-bottom: 24px; transition: color .25s; }
+}

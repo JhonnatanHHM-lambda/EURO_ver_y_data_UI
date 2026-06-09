@@ -1,0 +1,78 @@
+@use '../../../styles/variables' as *;
+
+.vyd-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  @media (max-width: $bp-lg) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: $bp-sm) { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (max-width: 380px)  { grid-template-columns: 1fr; gap: 8px; }
+}
+
+.vyd-kpi {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: $radius-lg; padding: 18px 20px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--card-shadow), var(--card-inset);
+  transition: background .25s, border-color .25s, box-shadow .25s;
+
+  &::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  &.ok::before     { background: linear-gradient(90deg, #22c55e, #16a34a); }
+  &.mute::before   { background: linear-gradient(90deg, #94a3b8, #64748b); }
+  &.danger::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+}
+
+.vyd-kpi-num {
+  font-size: 28px; font-weight: 900; color: var(--fg1);
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  transition: color .25s;
+  .vyd-kpi.ok &     { color: #16a34a; }
+  .vyd-kpi.mute &   { color: var(--fg3); }
+  .vyd-kpi.danger & { color: #dc2626; }
+}
+
+:root[data-theme="dark"] .vyd-kpi-num {
+  color: #fff;
+  .vyd-kpi.ok &     { color: #86efac; }
+  .vyd-kpi.mute &   { color: #cbd5e1; }
+  .vyd-kpi.danger & { color: #fca5a5; }
+}
+
+.vyd-kpi-lbl {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--fg3); margin-top: 10px;
+  transition: color .25s;
+}
+
+// Banner de sede obligatoria
+.vyd-gate {
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px 22px; border-radius: $radius-lg;
+  background: linear-gradient(135deg, rgba(255,227,2,.10), rgba(255,227,2,.04));
+  border: 1px solid rgba(255,227,2,.30); border-left: 3px solid #FFE302;
+  flex-wrap: wrap;
+}
+.vyd-gate-icon { font-size: 22px; flex-shrink: 0; }
+.vyd-gate-body { flex: 1; min-width: 200px; }
+.vyd-gate-title { font-size: 13.5px; font-weight: 700; color: var(--fg1); transition: color .25s; }
+.vyd-gate-text  { font-size: 12px; color: var(--fg2); margin-top: 3px; transition: color .25s; }
+
+.vyd-gate-select {
+  min-width: 220px; padding: 11px 14px;
+  background: var(--bg-input); border: 1px solid var(--border2);
+  border-radius: $radius-md; color: var(--fg1); font-size: 13px;
+  outline: none; appearance: none; cursor: pointer;
+  transition: border-color .2s, background .25s, color .25s;
+  &:focus { border-color: var(--accent); }
+  option { background: var(--bg-modal); color: var(--fg1); }
+}
+
+// Coming soon placeholder
+.vyd-coming-soon {
+  text-align: center; padding: 48px 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.vyd-coming-icon { font-size: 36px; }
+.vyd-coming-text { font-size: 14px; color: var(--fg2); max-width: 400px; line-height: 1.6; transition: color .25s; }
+.vyd-coming-meta { font-size: 11.5px; color: var(--fg4); transition: color .25s; }

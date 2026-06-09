@@ -1,0 +1,87 @@
+@use '../../../../styles/variables' as *;
+
+.vyd-modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn .2s ease-out;
+}
+
+.vyd-modal-content {
+  background: var(--bg-modal);
+  border: 1px solid var(--border2);
+  border-radius: $radius-xl;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--modal-shadow), var(--card-inset);
+  animation: slideUp .25s ease-out;
+  width: 100%;
+  transition: background .25s ease;
+}
+
+.vyd-modal-sm  { max-width: 400px; }
+.vyd-modal-md  { max-width: 520px; }
+.vyd-modal-lg  { max-width: 720px; }
+.vyd-modal-xl  { max-width: 900px; }
+
+.vyd-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg-modal); z-index: 1;
+  transition: background .25s, border-color .25s;
+
+  h2 { font-size: 16px; font-weight: 800; color: var(--fg1); margin: 0; transition: color .25s; }
+}
+
+.vyd-modal-close {
+  background: none; border: none; color: var(--fg3); cursor: pointer;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+  &:hover { background: var(--bg-hover); color: var(--fg1); }
+}
+
+.vyd-modal-body { padding: 22px 24px 26px; }
+
+// Formularios dentro del modal
+.vyd-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px;
+  &.cols-1 { grid-template-columns: 1fr; }
+  &.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: $bp-sm) { grid-template-columns: 1fr; }
+}
+
+.vyd-form-group {
+  display: flex; flex-direction: column; gap: 6px;
+  &.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--fg3); transition: color .25s;
+  }
+
+  input, select, textarea {
+    padding: 11px 13px;
+    background: var(--bg-input); border: 1px solid var(--border2);
+    border-radius: $radius-md; color: var(--fg1); font-size: 13.5px;
+    outline: none; transition: border-color .2s, box-shadow .2s, background .25s, color .25s;
+
+    &::placeholder { color: var(--placeholder); }
+    &:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+      background: var(--bg-input-focus);
+    }
+    option { background: var(--bg-modal); color: var(--fg1); }
+  }
+
+  textarea { resize: vertical; min-height: 90px; }
+}
+
+.vyd-modal-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border);
+}
+
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,0 +1,278 @@
+@use '../../../../styles/variables' as *;
+
+.vyd-topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 28px; height: $topbar-height;
+  background: var(--bg-topbar);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border-bottom: 1px solid var(--divider);
+  transition: background .25s ease, border-color .25s ease;
+}
+
+// ── Burger (solo mobile) ──────────────────────────────────────────────────────
+.vyd-burger {
+  display: none; flex-shrink: 0;
+  background: none; border: none; color: var(--fg2);
+  padding: 8px; border-radius: 8px; transition: background .15s; cursor: pointer;
+  &:hover { background: var(--bg-hover); color: var(--fg1); }
+}
+
+// ── Título ────────────────────────────────────────────────────────────────────
+.vyd-topbar-title { flex: 1; min-width: 0; overflow: hidden; }
+.vyd-tb-h1 {
+  font-size: 17px; font-weight: 800; letter-spacing: -.01em;
+  color: var(--fg1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color .25s;
+}
+.vyd-tb-sub { font-size: 11.5px; color: var(--fg3); margin-top: 1px; transition: color .25s; }
+
+// ── Right cluster ─────────────────────────────────────────────────────────────
+.vyd-topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.vyd-tb-divider   { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+
+// ── Sede pill ──────────────────────────────────────────────────────────────────
+.vyd-sede-wrap { position: relative; }
+
+.vyd-sede-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 999px;
+  background: var(--bg-hover); border: 1px solid var(--border2);
+  font-size: 12px; color: var(--fg2); cursor: pointer; white-space: nowrap;
+  transition: background .15s, border-color .15s, color .25s; max-width: 220px;
+
+  &:hover { background: var(--bg-hover2); }
+  &.set { border-color: rgba(34,197,94,.4); }
+  &.set svg:first-child { color: #22c55e; }
+  b { color: var(--fg1); font-weight: 600; overflow: hidden; text-overflow: ellipsis; max-width: 120px; display: block; }
+}
+
+.vyd-sede-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  min-width: 260px; max-height: 320px; overflow-y: auto;
+  background: var(--bg-modal); border: 1px solid var(--border2);
+  border-radius: $radius-lg; box-shadow: var(--card-shadow);
+  z-index: 200; animation: slideUp .18s ease-out;
+}
+.vyd-sede-dropdown-header {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--fg4); padding: 10px 14px 6px; border-bottom: 1px solid var(--border);
+}
+.vyd-sede-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; padding: 10px 14px; border: none; background: none;
+  cursor: pointer; text-align: left; transition: background .12s;
+  border-bottom: 1px solid var(--border);
+  &:last-child { border-bottom: none; }
+  &:hover  { background: var(--bg-hover); }
+  &.active { background: var(--bg-hover2); }
+}
+.vyd-sede-option-name { font-size: 12.5px; font-weight: 600; color: var(--fg1); transition: color .25s; }
+.vyd-sede-option-city { font-size: 11px; color: var(--fg3); flex-shrink: 0; }
+
+// ── Usuario ────────────────────────────────────────────────────────────────────
+.vyd-user-wrap { position: relative; }
+
+.vyd-user {
+  display: flex; align-items: center; gap: 9px;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 8px 4px 4px; border-radius: 10px;
+  transition: background .14s;
+  &:hover, &.open { background: var(--bg-hover); }
+}
+
+.vyd-user-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+}
+.vyd-user-meta { line-height: 1.2; }
+.vyd-user-name { font-size: 12.5px; font-weight: 600; color: var(--fg1); transition: color .25s; white-space: nowrap; }
+.vyd-user-role { font-size: 10.5px; color: var(--fg3); transition: color .25s; }
+
+.vyd-user-chevron {
+  color: var(--fg4); flex-shrink: 0;
+  transition: transform .2s ease;
+  .vyd-user.open & { transform: rotate(180deg); }
+}
+
+// ── Dropdown de usuario ───────────────────────────────────────────────────────
+.vyd-user-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  min-width: 240px;
+  background: var(--bg-modal); border: 1px solid var(--border2);
+  border-radius: $radius-lg; box-shadow: 0 16px 48px rgba(0,0,0,.3);
+  z-index: 200; animation: slideUp .16s ease-out;
+  overflow: hidden;
+}
+
+.vyd-user-dd-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+}
+
+.vyd-user-dd-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800;
+}
+
+.vyd-user-dd-info { flex: 1; min-width: 0; }
+.vyd-user-dd-name  { font-size: 13px; font-weight: 700; color: var(--fg1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vyd-user-dd-email { font-size: 11px; color: var(--fg4); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vyd-user-dd-role  {
+  display: inline-block; margin-top: 4px;
+  font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+  background: rgba(99,102,241,.12); color: var(--accent); border: 1px solid rgba(99,102,241,.2);
+}
+
+.vyd-user-dd-divider { height: 1px; background: var(--border); }
+
+.vyd-user-dd-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 11px 16px; border: none; background: none;
+  font-size: 13px; font-weight: 500; color: var(--fg2);
+  cursor: pointer; text-align: left; transition: background .12s, color .12s;
+
+  &:hover { background: var(--bg-hover); color: var(--fg1); }
+  &.danger { color: #ef4444;
+    &:hover { background: rgba(239,68,68,.08); color: #dc2626; }
+  }
+}
+
+// ── Campana de notificaciones ─────────────────────────────────────────────────
+.vyd-notif-wrap { position: relative; }
+
+.vyd-icon-btn { position: relative; }
+
+.vyd-notif-badge {
+  position: absolute; top: -3px; right: -3px;
+  min-width: 16px; height: 16px; border-radius: 999px;
+  background: #ef4444; color: #fff;
+  font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px; border: 1.5px solid var(--bg-topbar);
+  pointer-events: none;
+}
+
+.vyd-notif-dropdown {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  width: 360px; max-height: 520px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: $radius-lg; box-shadow: 0 16px 48px rgba(0,0,0,.35);
+  z-index: 200;
+}
+
+.vyd-notif-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  font-size: 12.5px; font-weight: 700; color: var(--fg1);
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+}
+.vyd-notif-count {
+  font-size: 10px; padding: 2px 7px; border-radius: 999px;
+  background: rgba(239,68,68,.12); color: #ef4444;
+  border: 1px solid rgba(239,68,68,.2); font-weight: 700;
+}
+
+.vyd-notif-empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 36px 20px; color: var(--fg4); font-size: 12px; gap: 0;
+}
+
+.vyd-notif-item {
+  display: flex; gap: 12px; padding: 14px 16px;
+  border-bottom: 1px solid var(--border); transition: background .12s;
+  position: relative;
+  &:last-child { border-bottom: none; }
+  &:not(.leida) { background: rgba(99,102,241,.04); }
+  &:hover { background: var(--bg-hover); }
+}
+
+.vyd-notif-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); margin-top: 2px;
+}
+
+.vyd-notif-body { flex: 1; min-width: 0; }
+.vyd-notif-titulo  { font-size: 12px; font-weight: 700; color: var(--fg1); margin-bottom: 4px; line-height: 1.4; }
+.vyd-notif-cuerpo  { font-size: 11px; color: var(--fg3); line-height: 1.5; margin-bottom: 5px; }
+.vyd-notif-fecha   { font-size: 10px; color: var(--fg4); }
+
+.vyd-notif-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  flex-shrink: 0; margin-top: 6px;
+}
+
+.vyd-notif-resolver {
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--surface2); border-radius: 8px;
+  border: 1px solid var(--border2);
+}
+
+// ── Botones icon ───────────────────────────────────────────────────────────────
+.vyd-icon-btn, .vyd-theme-toggle {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: var(--bg-hover); border: 1px solid var(--border2);
+  color: var(--fg2); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s, border-color .25s;
+  &:hover { background: var(--bg-hover2); color: var(--fg1); }
+}
+.vyd-theme-toggle:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+.vyd-theme-toggle.is-light svg { color: #f59e0b; }
+
+// ════════════════════════════════════════════════════════════════════════════
+// RESPONSIVE
+// ════════════════════════════════════════════════════════════════════════════
+
+// Tablet landscape
+@media (max-width: $bp-lg) {
+  .vyd-topbar { padding: 0 20px; gap: 10px; }
+  .vyd-user-meta { display: none; } // Ocultar nombre en tablets pequeñas
+}
+
+// Tablet portrait / mobile grande
+@media (max-width: $bp-md) {
+  .vyd-burger { display: inline-flex; }
+  .vyd-topbar { padding: 0 14px; gap: 8px; }
+  .vyd-tb-sub { display: none; }
+
+  // Sede pill: mostrar solo el ícono si no hay sede, o la ciudad si hay
+  .vyd-sede-pill {
+    max-width: 160px;
+    b { max-width: 80px; }
+  }
+
+  // Ocultar divisor y nombre de usuario, mostrar solo avatar
+  .vyd-topbar-title  { display: none; }
+  .vyd-tb-divider    { display: none; }
+  .vyd-user-meta     { display: none; }
+  .vyd-user-chevron  { display: none; }
+}
+
+// Mobile pequeño
+@media (max-width: $bp-sm) {
+  .vyd-topbar { padding: 0 10px; gap: 6px; }
+
+  // Solo mostrar: burger | título | sede-pill | theme-toggle | avatar
+  .vyd-icon-btn { display: none; } // Ocultar campana en mobile
+  .vyd-sede-pill { max-width: 120px; font-size: 11px; padding: 6px 10px;
+    span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; display: block; } }
+
+  // Dropdown de sede: pantalla completa en mobile
+  .vyd-sede-dropdown { right: auto; left: 0; min-width: calc(100vw - 20px); max-width: 100vw; }
+}
+
+// TV (> 1400px)
+@media (min-width: 1400px) {
+  .vyd-topbar { padding: 0 40px; }
+}
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,0 +1,195 @@
+@use '../../../styles/variables' as *;
+
+// ── Panel de filtros expandible ───────────────────────────────────────────────
+.vyd-filtros-panel {
+  max-height: 0; overflow: hidden;
+  transition: max-height .3s ease;
+
+  &.open {
+    max-height: 260px;
+    @media (max-width: $bp-sm) { max-height: 520px; }
+  }
+
+  // Grid de filtros responsivo
+  .vyd-form-grid {
+    @media (max-width: $bp-md) { grid-template-columns: 1fr 1fr; }
+    @media (max-width: $bp-sm) { grid-template-columns: 1fr; }
+  }
+
+  select, input {
+    padding: 9px 12px;
+    background: var(--bg-input); border: 1px solid var(--border2);
+    border-radius: $radius-md; color: var(--fg1); font-size: 13px; outline: none;
+    width: 100%;
+    &:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    option { background: var(--bg-modal); color: var(--fg1); }
+    transition: border-color .2s, background .25s;
+  }
+}
+
+// ── Cabecera de tabla con search + filtros ────────────────────────────────────
+.vyd-table-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 18px 22px 16px; gap: 16px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+
+  @media (max-width: $bp-md) {
+    flex-direction: column; gap: 12px; padding: 14px 16px 12px;
+  }
+}
+
+// Buscador con más espacio interno
+.vyd-search {
+  svg { left: 14px; }
+  input { padding: 11px 14px 11px 42px; font-size: 13.5px; }
+
+  @media (max-width: $bp-sm) {
+    input { font-size: 13px; padding: 10px 12px 10px 38px; }
+  }
+}
+
+// ── Dot en botón de filtros activos ───────────────────────────────────────────
+.vyd-filter-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); margin-left: 3px; flex-shrink: 0;
+}
+
+// ── Tabla central ─────────────────────────────────────────────────────────────
+.vyd-nm {
+  white-space: normal !important; min-width: 180px;
+  strong { font-weight: 600; color: var(--fg1); }
+}
+
+.vyd-doc-mono {
+  font-family: $font-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+// ── Paginación ─────────────────────────────────────────────────────────────────
+.vyd-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 16px 22px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+
+  @media (max-width: $bp-md) { padding: 14px 16px; }
+  @media (max-width: $bp-sm) {
+    justify-content: center;
+    .vyd-pag-info:first-child { display: none; } // ocultar "X-Y de Z" en mobile muy pequeño
+  }
+}
+
+.vyd-pag-info {
+  font-size: 12px; color: var(--fg3); white-space: nowrap;
+}
+
+.vyd-pag-controls {
+  display: flex; align-items: center; gap: 4px;
+}
+
+.vyd-pag-btn {
+  min-width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: var(--bg-hover); color: var(--fg2); cursor: pointer;
+  font-size: 12.5px; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .15s; padding: 0 6px;
+
+  &:hover:not(:disabled) { background: var(--bg-hover2); color: var(--fg1); }
+  &:disabled { opacity: .35; cursor: not-allowed; }
+  &.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(99,102,241,.35);
+  }
+}
+
+.vyd-pag-dots {
+  padding: 0 4px; font-size: 12px; color: var(--fg4); user-select: none;
+}
+
+// ── Timeline de trazabilidad ───────────────────────────────────────────────
+.vyd-timeline {
+  display: flex; flex-direction: column; padding: 8px 0 4px;
+}
+
+.vyd-tl-item {
+  display: flex; gap: 16px; position: relative; padding-bottom: 24px;
+
+  &::before {
+    content: ''; position: absolute; left: 7px; top: 20px; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  &.last::before { display: none; }
+}
+
+.vyd-tl-dot {
+  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+  margin-top: 4px; position: relative; z-index: 1;
+  box-shadow: 0 0 0 3px var(--surface);
+}
+
+.vyd-tl-card {
+  flex: 1; background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: $radius-md; padding: 14px 16px;
+  transition: background .15s, border-color .15s;
+  &:hover { background: var(--bg-hover2); border-color: var(--border2); }
+}
+
+.vyd-tl-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+
+.vyd-tl-origen {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--fg4);
+}
+
+.vyd-tl-body { display: flex; flex-direction: column; gap: 6px; }
+
+.vyd-tl-row {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--fg2);
+  svg { color: var(--fg4); flex-shrink: 0; }
+  strong { color: var(--fg1); font-weight: 600; }
+}
+
+.vyd-tl-footer {
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--fg4);
+  em { font-style: normal; color: var(--fg3); }
+}
+
+// ── Cards móvil (< 768px) ─────────────────────────────────────────────────────
+.vyd-cards { display: none; flex-direction: column; }
+
+.vyd-card-row {
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background .1s;
+  &:hover  { background: var(--bg-hover); }
+  &:last-child { border-bottom: none; }
+}
+
+.vyd-card-top   { margin-bottom: 7px; }
+.vyd-card-doc   { font-family: $font-mono; font-size: 10.5px; color: var(--fg4); font-weight: 600; }
+.vyd-card-name  { font-size: 14px; font-weight: 800; color: var(--fg1); margin-top: 1px; line-height: 1.3; }
+.vyd-card-email { font-size: 11px; color: var(--fg4); margin-top: 1px; }
+
+.vyd-card-badges {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 7px;
+}
+
+.vyd-card-meta {
+  display: flex; flex-wrap: wrap; gap: 4px 10px;
+  font-size: 11.5px; color: var(--fg3);
+}
+.vyd-card-meta-item { white-space: nowrap; }
+
+@media (max-width: 767px) {
+  .vyd-tbl-wrap   { display: none; }
+  .vyd-cards      { display: flex; }
+  .vyd-table-head { padding: 12px 14px 10px; }
+  .vyd-panel-title { font-size: 12.5px; }
+  .vyd-panel-sub   { font-size: 11px; }
+  .vyd-toolbar     { flex-wrap: wrap; gap: 8px; }
+}
