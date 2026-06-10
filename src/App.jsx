@@ -13,6 +13,8 @@ import CargaExcel from './modules/carga/components/CargaExcel.jsx';
 import BDCentralizada from './modules/bd_centralizada/components/BDCentralizada.jsx';
 import Administracion from './modules/administracion/components/Administracion.jsx';
 import AdminRegistros from './modules/adminRegistros/components/AdminRegistros.jsx';
+import Contratos from './modules/contratos/components/Contratos.jsx';
+import FirmaDigital from './modules/firma/components/FirmaDigital.jsx';
 
 function App() {
     return (
@@ -22,6 +24,7 @@ function App() {
                 {/* Públicas */}
                 <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/firma/:token" element={<FirmaDigital />} />
 
                 {/* Protegidas */}
                 <Route element={<ProtectedRoute />}>
@@ -87,6 +90,8 @@ function App() {
                                 <AdminRegistros />
                             </TienePermiso>
                         } />
+
+                        <Route path="/app/contratos" element={<Contratos />} />
                     </Route>
                 </Route>
             </Routes>
