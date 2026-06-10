@@ -19,8 +19,8 @@
   &:hover { background: var(--bg-hover); color: var(--fg1); }
 }
 
-// ── Título ────────────────────────────────────────────────────────────────────
-.vyd-topbar-title { flex: 1; min-width: 0; overflow: hidden; }
+// ── Título (oculto — el contexto lo da el contenido de cada página) ───────────
+.vyd-topbar-title { display: none; }
 .vyd-tb-h1 {
   font-size: 17px; font-weight: 800; letter-spacing: -.01em;
   color: var(--fg1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -28,8 +28,8 @@
 }
 .vyd-tb-sub { font-size: 11.5px; color: var(--fg3); margin-top: 1px; transition: color .25s; }
 
-// ── Right cluster ─────────────────────────────────────────────────────────────
-.vyd-topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+// ── Right cluster — siempre pegado a la derecha ───────────────────────────────
+.vyd-topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
 .vyd-tb-divider   { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
 
 // ── Sede pill ──────────────────────────────────────────────────────────────────
@@ -250,8 +250,7 @@
     b { max-width: 80px; }
   }
 
-  // Ocultar divisor y nombre de usuario, mostrar solo avatar
-  .vyd-topbar-title  { display: none; }
+  // Ocultar divisor
   .vyd-tb-divider    { display: none; }
   .vyd-user-meta     { display: none; }
   .vyd-user-chevron  { display: none; }
