@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     FiUsers, FiShield, FiUpload, FiGitBranch, FiLogOut,
-    FiDatabase, FiLayers, FiEdit, FiChevronDown,
-    FiFileText, FiClock, FiBriefcase, FiSettings, FiServer,
+    FiLayers, FiEdit, FiChevronDown, FiHome,
+    FiFileText, FiBriefcase, FiSettings, FiServer,
+    FiFolder, FiZap, FiBox,
 } from 'react-icons/fi';
 import swal from '../../../../utils/swal';
 import api from '../../../../services/api';
@@ -12,23 +13,25 @@ import '../utils/Sidebar.scss';
 
 const grupos = [
     {
-        key: 'bd',
-        label: 'BD Centralizada',
-        icon: <FiDatabase size={15} />,
-        items: [
-            { key: 'trazabilidad', label: 'Trazabilidad',   icon: <FiGitBranch size={16} />, path: '/app/trazabilidad',    permiso: 'can_view_trazabilidad' },
-            { key: 'carga',        label: 'Carga de datos', icon: <FiUpload size={16} />,    path: '/app/carga',           permiso: 'can_upload_excel' },
-            { key: 'bd',           label: 'Hist. Cargas',   icon: <FiServer size={16} />,    path: '/app/bd-centralizada', permiso: 'can_manage_cargas' },
-            { key: 'registros',    label: 'Adm. Registros', icon: <FiEdit size={16} />,      path: '/app/registros',       permiso: 'can_edit_registros' },
-        ],
-    },
-    {
         key: 'gestion',
         label: 'Gestión Humana',
         icon: <FiBriefcase size={15} />,
         items: [
-            { key: 'contratos',    label: 'Contratos',   icon: <FiFileText size={16} />, path: '/app/contratos',   permiso: null, badge: 'Próximo' },
-            { key: 'hist-firma',   label: 'Hist. Firma', icon: <FiClock size={16} />,    path: '/app/hist-firma',  permiso: null, badge: 'Próximo' },
+            { key: 'dashboard',    label: 'Dashboard',      icon: <FiHome size={16} />,       path: '/app/dashboard',       permiso: null,                    badge: 'Próximo' },
+            { key: 'contratos',    label: 'Contratos',        icon: <FiFileText size={16} />,   path: '/app/contratos',       permiso: null, badge: 'Próximo' },
+            { key: 'trazabilidad', label: 'Trazabilidad',   icon: <FiGitBranch size={16} />,  path: '/app/trazabilidad',    permiso: 'can_view_trazabilidad' },
+            { key: 'carga',        label: 'Carga de datos', icon: <FiUpload size={16} />,     path: '/app/carga',           permiso: 'can_upload_excel' },
+            { key: 'hist-cargas',  label: 'Hist. Cargas',   icon: <FiServer size={16} />,     path: '/app/bd-centralizada', permiso: 'can_manage_cargas' },
+            { key: 'registros',    label: 'Adm. Registros', icon: <FiEdit size={16} />,       path: '/app/registros',       permiso: 'can_edit_registros' },
+        ],
+    },
+    {
+        key: 'documental',
+        label: 'Gestión Documental',
+        icon: <FiFolder size={15} />,
+        items: [
+            { key: 'optimizaciones', label: 'Optimizaciones', icon: <FiZap size={16} />,  path: '/app/optimizaciones', permiso: null, badge: 'Próximo' },
+            { key: 'cajas',          label: 'Cajas',          icon: <FiBox size={16} />,  path: '/app/cajas',          permiso: null, badge: 'Próximo' },
         ],
     },
     {
