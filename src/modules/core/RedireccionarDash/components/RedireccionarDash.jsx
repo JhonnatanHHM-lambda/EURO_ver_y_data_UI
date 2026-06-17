@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 
 // Rutas en orden de prioridad — la primera que el usuario tenga habilitada
 const RUTAS_PRIORIDAD = [
-    { permiso: 'can_view_trazabilidad', path: '/app/trazabilidad' },
-    { permiso: 'can_upload_excel',      path: '/app/carga'        },
-    { permiso: 'can_manage_cargas',     path: '/app/bd-centralizada' },
-    { permiso: 'can_manage_sedes',      path: '/app/administracion'  },
-    { permiso: 'can_manage_users',      path: '/app/usuarios'        },
-    { permiso: 'can_manage_roles',      path: '/app/roles'           },
+    { permiso: 'can_view_trazabilidad', path: '/app/trazabilidad'   },
+    { permiso: 'can_view_contratos',    path: '/app/contratos'      },
+    { permiso: 'can_view_contrataciones', path: '/app/contrataciones' },
+    { permiso: 'can_upload_excel',      path: '/app/carga'          },
+    { permiso: 'can_manage_cargas',     path: '/app/bd-centralizada'},
+    { permiso: 'can_manage_sedes',      path: '/app/administracion' },
+    { permiso: 'can_manage_users',      path: '/app/usuarios'       },
+    { permiso: 'can_manage_roles',      path: '/app/roles'          },
+    { permiso: 'can_edit_registros',    path: '/app/registros'      },
 ];
 
 const RedireccionarDash = () => {

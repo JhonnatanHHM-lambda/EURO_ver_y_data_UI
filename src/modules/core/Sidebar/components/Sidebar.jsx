@@ -18,7 +18,8 @@ const grupos = [
         icon: <FiBriefcase size={15} />,
         items: [
             { key: 'dashboard',    label: 'Dashboard',      icon: <FiHome size={16} />,       path: '/app/dashboard',       permiso: null,                    badge: 'Próximo' },
-            { key: 'contratos',    label: 'Contratos',        icon: <FiFileText size={16} />,   path: '/app/contratos',       permiso: null },
+            { key: 'vencimientos',    label: 'Vencimientos',   icon: <FiFileText size={16} />,   path: '/app/contratos',         permiso: 'can_view_contratos' },
+            { key: 'contrataciones',  label: 'Contrataciones', icon: <FiBriefcase size={16} />,  path: '/app/contrataciones',    permiso: 'can_view_contrataciones' },
             { key: 'trazabilidad', label: 'Trazabilidad',   icon: <FiGitBranch size={16} />,  path: '/app/trazabilidad',    permiso: 'can_view_trazabilidad' },
             { key: 'carga',        label: 'Carga de datos', icon: <FiUpload size={16} />,     path: '/app/carga',           permiso: 'can_upload_excel' },
             { key: 'hist-cargas',  label: 'Hist. Cargas',   icon: <FiServer size={16} />,     path: '/app/bd-centralizada', permiso: 'can_manage_cargas' },

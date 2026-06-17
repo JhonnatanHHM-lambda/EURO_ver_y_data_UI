@@ -216,10 +216,32 @@ const useUsuarios = () => {
         }
     };
 
+    const desactivar = async (usuario) => {
+        if (!usuario.is_active) {
+            swal({ title: 'Usuario ya inactivo', text: 'Este usuario ya está desactivado.', icon: 'info', timer: 2000, showConfirmButton: false });
+            return;
+        }
+        const result = await swal({
+            title: `¿Desactivar a "${usuario.nombre_completo}"?`,
+            text: 'El usuario no podrá iniciar sesión, pero sus datos se conservarán. Puedes reactivarlo editando el usuario.',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: 'Sí, desactivar', cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#f59e0b'
+        });
+        if (!result.isConfirmed) return;
+        try {
+            await api.patch(`usuarios/${usuario.id}/`, { is_active: false });
+            swal({ title: 'Desactivado', text: 'El usuario ha sido desactivado.', icon: 'success', timer: 1800, showConfirmButton: false });
+            cargar();
+        } catch {
+            swal({ title: 'Error', text: 'No se pudo desactivar el usuario.', icon: 'error' });
+        }
+    };
+
     const eliminar = async (usuario) => {
         const result = await swal({
-            title: `¿Eliminar a "${usuario.nombre_completo}"?`,
-            text: 'El usuario será desactivado del sistema.',
+            title: `¿Eliminar permanentemente a "${usuario.nombre_completo}"?`,
+            html: '<p style="font-size:13px;color:var(--fg3)">Esta acción <strong style="color:#ef4444">no se puede deshacer</strong>. Todos los datos del usuario serán eliminados del sistema.</p>',
             icon: 'warning', showCancelButton: true,
             confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
             confirmButtonColor: '#ef4444'
@@ -237,7 +259,7 @@ const useUsuarios = () => {
     return {
         usuarios: usuariosFiltrados, roles, loading, modalOpen, editing,
         search, setSearch, formData, setFormData, erroresCampos,
-        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, eliminar,
+        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar,
     };
 };
 

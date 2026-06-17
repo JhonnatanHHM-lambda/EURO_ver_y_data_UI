@@ -1,17 +1,27 @@
-import { FiPlus, FiEdit2, FiTrash2, FiShield, FiUsers, FiCheck, FiDatabase, FiUpload, FiGrid, FiMapPin, FiArchive, FiEdit } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiShield, FiUsers, FiCheck, FiDatabase, FiUpload, FiGrid, FiMapPin, FiEdit, FiFileText, FiCheckSquare, FiZap, FiUserCheck, FiBriefcase } from 'react-icons/fi';
 import Modal from '../../core/Modal/components/Modal.jsx';
 import useRoles from '../hooks/useRoles.jsx';
 import '../utils/Roles.scss';
 
 const PERMISOS_INFO = {
-    can_manage_users:       { label: 'Gestionar usuarios',          desc: 'Crear, editar y desactivar cuentas de usuario',             icon: <FiUsers size={14} />,    grupo: 'Administración' },
-    can_manage_roles:       { label: 'Gestionar roles y permisos',  desc: 'Crear roles y asignar permisos a cada uno',                  icon: <FiShield size={14} />,   grupo: 'Administración' },
-    can_view_trazabilidad:  { label: 'Ver trazabilidad',            desc: 'Consultar el historial de empleados y candidatos por sede',  icon: <FiDatabase size={14} />, grupo: 'Trazabilidad' },
-    can_upload_excel:       { label: 'Cargar archivos Excel',       desc: 'Subir bases de datos de empleados al sistema',              icon: <FiUpload size={14} />,   grupo: 'Trazabilidad' },
-    can_view_dashboard:     { label: 'Ver dashboard',               desc: 'Acceder al panel de resumen y estadísticas generales',       icon: <FiGrid size={14} />,     grupo: 'General' },
-    can_manage_sedes:       { label: 'Gestionar sedes',             desc: 'Crear nuevas sedes al cargar archivos Excel',                icon: <FiMapPin size={14} />,   grupo: 'Trazabilidad' },
-    can_manage_cargas:      { label: 'BD Centralizada',            desc: 'Ver historial de cargas y revertirlas',                      icon: <FiDatabase size={14} />, grupo: 'Trazabilidad' },
-    can_edit_registros:     { label: 'Editar registros',           desc: 'Cambiar estado, proceso y datos de cada registro individual', icon: <FiEdit size={14} />,     grupo: 'Trazabilidad' },
+    // Trazabilidad
+    can_view_trazabilidad:  { label: 'Ver trazabilidad',            desc: 'Consultar el historial de empleados y candidatos por sede',   icon: <FiDatabase size={14} />,    grupo: 'Trazabilidad' },
+    can_upload_excel:       { label: 'Cargar archivos Excel',       desc: 'Subir bases de datos de empleados al sistema',               icon: <FiUpload size={14} />,      grupo: 'Trazabilidad' },
+    can_manage_sedes:       { label: 'Gestionar sedes',             desc: 'Crear nuevas sedes al cargar archivos Excel',                 icon: <FiMapPin size={14} />,      grupo: 'Trazabilidad' },
+    can_manage_cargas:      { label: 'BD Centralizada',             desc: 'Ver historial de cargas y revertirlas',                       icon: <FiDatabase size={14} />,    grupo: 'Trazabilidad' },
+    can_edit_registros:     { label: 'Editar registros',            desc: 'Cambiar estado, proceso y datos de cada registro individual', icon: <FiEdit size={14} />,        grupo: 'Trazabilidad' },
+    // Vencimientos y Contrataciones
+    can_view_contratos:           { label: 'Ver vencimientos',            desc: 'Acceder al panel de vencimientos activos y firma digital',           icon: <FiFileText size={14} />,    grupo: 'Vencimientos' },
+    can_decide_contratos:         { label: 'Decidir vencimientos',        desc: 'Tomar decisiones sobre vencimientos: prorrogar o terminar (Director)', icon: <FiCheckSquare size={14} />, grupo: 'Vencimientos' },
+    can_set_condiciones_contratos:{ label: 'Definir condiciones GH',      desc: 'Definir condiciones de prórroga/terminación y subir documentos (GH)',  icon: <FiUserCheck size={14} />,   grupo: 'Vencimientos' },
+    can_escanear_siesa:           { label: 'Consultar SIESA',             desc: 'Ejecutar escaneo manual de contratos próximos a vencer',               icon: <FiZap size={14} />,         grupo: 'Vencimientos' },
+    can_manage_asignaciones:      { label: 'Gestionar asignaciones',      desc: 'Asignar directores y gestores humanos a sedes',                        icon: <FiUserCheck size={14} />,   grupo: 'Vencimientos' },
+    can_view_contrataciones:      { label: 'Ver contrataciones',          desc: 'Consultar historial de documentos firmados por empleado',              icon: <FiBriefcase size={14} />,   grupo: 'Vencimientos' },
+    // Administración
+    can_manage_users:       { label: 'Gestionar usuarios',          desc: 'Crear, editar y desactivar cuentas de usuario',               icon: <FiUsers size={14} />,       grupo: 'Administración' },
+    can_manage_roles:       { label: 'Gestionar roles y permisos',  desc: 'Crear roles y asignar permisos a cada uno',                   icon: <FiShield size={14} />,      grupo: 'Administración' },
+    // General
+    can_view_dashboard:     { label: 'Ver dashboard',               desc: 'Acceder al panel de resumen y estadísticas generales',        icon: <FiGrid size={14} />,        grupo: 'General' },
 };
 
 const Roles = () => {

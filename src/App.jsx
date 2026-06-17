@@ -14,6 +14,7 @@ import BDCentralizada from './modules/bd_centralizada/components/BDCentralizada.
 import Administracion from './modules/administracion/components/Administracion.jsx';
 import AdminRegistros from './modules/adminRegistros/components/AdminRegistros.jsx';
 import Contratos from './modules/contratos/components/Contratos.jsx';
+import Contrataciones from './modules/contrataciones/components/Contrataciones.jsx';
 import FirmaDigital from './modules/firma/components/FirmaDigital.jsx';
 
 function App() {
@@ -91,7 +92,17 @@ function App() {
                             </TienePermiso>
                         } />
 
-                        <Route path="/app/contratos" element={<Contratos />} />
+                        <Route path="/app/contratos" element={
+                            <TienePermiso permiso="can_view_contratos">
+                                <Contratos />
+                            </TienePermiso>
+                        } />
+
+                        <Route path="/app/contrataciones" element={
+                            <TienePermiso permiso="can_view_contrataciones">
+                                <Contrataciones />
+                            </TienePermiso>
+                        } />
                     </Route>
                 </Route>
             </Routes>

@@ -53,7 +53,7 @@ const useAdministracion = () => {
         setEditing(item);
         setForm(
             tab === 'sedes'
-                ? { nombre: item.nombre, ciudad: item.ciudad, codigo: item.codigo }
+                ? { nombre: item.nombre, ciudad: item.ciudad, codigo: item.codigo, dias_alerta_director: item.dias_alerta_director ?? 5 }
                 : { nombre: item.nombre, descripcion: item.descripcion || '' }
         );
         setErrores({});
@@ -88,7 +88,7 @@ const useAdministracion = () => {
         const esSede  = tab === 'sedes';
         const base    = esSede ? 'admin/sedes/' : 'admin/origenes/';
         const payload = esSede
-            ? { nombre: form.nombre.trim(), ciudad: form.ciudad.trim(), codigo: form.codigo.trim().toUpperCase() }
+            ? { nombre: form.nombre.trim(), ciudad: form.ciudad.trim(), codigo: form.codigo.trim().toUpperCase(), dias_alerta_director: form.dias_alerta_director ?? 5 }
             : { nombre: form.nombre.trim().toUpperCase(), descripcion: form.descripcion?.trim() || '' };
 
         try {

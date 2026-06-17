@@ -1,5 +1,4 @@
 // ── Drawer de trazabilidad individual ─────────────────────────────────────────
-// SIEMPRE oscuro, independiente del tema (glass dark overlay)
 
 // Overlay con blur
 .vyd-drawer-overlay {
@@ -14,10 +13,10 @@
 .vyd-drawer {
   position: fixed; top: 0; right: 0; bottom: 0;
   width: min(620px, 94vw); z-index: 51;
-  background: rgba(20,18,30,.96);
+  background: var(--bg-modal);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border-left: 1px solid rgba(255,255,255,.12);
+  border-left: 1px solid var(--border);
   box-shadow: -16px 0 60px rgba(0,0,0,.55);
   overflow-y: auto; overflow-x: hidden;
   animation: drawerIn .28s cubic-bezier(.4,0,.2,1);
@@ -25,26 +24,26 @@
   // Scrollbar
   &::-webkit-scrollbar { width: 5px; }
   &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+  &::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 }
 
 // Header con línea amarilla Euro
 .vyd-drawer-head {
   position: sticky; top: 0; z-index: 2;
-  background: rgba(15,13,22,.97);
+  background: var(--surface);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   padding: 20px 24px;
   display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
+  border-bottom: 1px solid var(--border);
   box-shadow: inset 0 -2px 0 #FFE302;  // Línea amarilla Euro
 }
 
 .vyd-drawer-person {
-  font-size: 17px; font-weight: 900; color: #fff; letter-spacing: -.02em; margin-bottom: 5px;
+  font-size: 17px; font-weight: 900; color: var(--fg1); letter-spacing: -.02em; margin-bottom: 5px;
 }
 
 .vyd-drawer-doc {
-  font-size: 12px; color: rgba(255,255,255,.55); font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--fg3); font-variant-numeric: tabular-nums;
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
 
@@ -65,12 +64,12 @@
 
 .vyd-drawer-close {
   width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18);
-  color: #fff; cursor: pointer;
+  background: var(--border); border: 1px solid var(--border2);
+  color: var(--fg1); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background .15s;
   margin-top: 2px;
-  &:hover { background: rgba(255,255,255,.20); }
+  &:hover { background: var(--bg-hover2); }
 }
 
 // padding-left:24px  →  nodo queda a 24px del drawer (dentro, no se recorta)
@@ -83,24 +82,24 @@
 }
 
 .vyd-person-field {
-  background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10);
+  background: var(--bg-hover); border: 1px solid var(--border);
   border-radius: 10px; padding: 11px 14px;
 }
 
 .vyd-person-lbl {
   font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-  color: rgba(255,255,255,.50); margin-bottom: 5px;
+  color: var(--fg4); margin-bottom: 5px;
 }
 
 .vyd-person-val {
-  font-size: 13px; color: #fff; font-weight: 600; line-height: 1.3;
+  font-size: 13px; color: var(--fg1); font-weight: 600; line-height: 1.3;
 }
 
 // Título de sección
 .vyd-sec-title {
   font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
   color: #c4b5fd; padding-bottom: 12px; margin-bottom: 18px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
+  border-bottom: 1px solid var(--border);
 }
 
 // ── Timeline — CSS GRID (sin position negativo, sin riesgo de recorte) ────────
@@ -129,7 +128,7 @@
   width: 18px; height: 18px; border-radius: 50%;
   border: 3px solid; box-sizing: border-box;
   flex-shrink: 0;
-  background: #14121e;
+  background: var(--surface);
 }
 
 // Segmento de línea — se estira para llenar el espacio entre nodos
@@ -141,16 +140,16 @@
 
 // Columna derecha: card + margen inferior
 .vyd-tl-card {
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.11);
+  background: var(--bg-hover); border: 1px solid var(--border);
   border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;
 }
 .vyd-tl-event:last-child .vyd-tl-card { margin-bottom: 0; }
 
 .vyd-tl-card {
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.11);
+  background: var(--bg-hover); border: 1px solid var(--border);
   border-radius: 12px; padding: 13px 14px;
   transition: background .15s;
-  &:hover { background: rgba(255,255,255,.08); }
+  &:hover { background: var(--bg-hover2); }
 }
 
 .vyd-tl-top {
@@ -159,12 +158,12 @@
 }
 
 .vyd-tl-sede {
-  font-size: 13px; font-weight: 700; color: #fff;
+  font-size: 13px; font-weight: 700; color: var(--fg1);
   display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
 }
 
 .vyd-tl-fecha {
-  font-size: 11px; color: rgba(255,255,255,.38);
+  font-size: 11px; color: var(--fg4);
   font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace;
   flex-shrink: 0; white-space: nowrap;
 }
@@ -173,29 +172,29 @@
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
 }
 
-.vyd-tl-empresa { font-size: 12px; color: rgba(255,255,255,.65); }
+.vyd-tl-empresa { font-size: 12px; color: var(--fg2); }
 
 .vyd-tl-detalle {
-  font-size: 12px; color: rgba(255,255,255,.55); line-height: 1.55; margin-top: 4px;
+  font-size: 12px; color: var(--fg3); line-height: 1.55; margin-top: 4px;
 }
 
 // Bloque motivo / retiro
 .vyd-tl-retiro-block {
   margin-top: 10px; padding: 9px 12px;
-  background: rgba(255,255,255,.04); border-radius: 8px;
+  background: var(--bg-hover); border-radius: 8px;
   border-left: 2px solid rgba(239,68,68,.45);
 }
 
 .vyd-tl-retiro-fecha {
-  font-size: 11px; color: rgba(255,255,255,.38);
+  font-size: 11px; color: var(--fg4);
   font-variant-numeric: tabular-nums; display: block; margin-bottom: 3px;
 }
 
-.vyd-tl-motivo { font-size: 12px; color: rgba(255,255,255,.72); line-height: 1.5; }
+.vyd-tl-motivo { font-size: 12px; color: var(--fg2); line-height: 1.5; }
 
 .vyd-tl-motivo-lbl {
   font-size: 9.5px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: rgba(255,255,255,.38); margin-right: 4px;
+  text-transform: uppercase; color: var(--fg4); margin-right: 4px;
 }
 
 // ── Botón de edición en la card del timeline ─────────────────────────────────
@@ -205,7 +204,7 @@
   color: #a5b4fc; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all .15s;
-  &:hover { background: rgba(99,102,241,.35); color: #fff; border-color: rgba(99,102,241,.65); }
+  &:hover { background: rgba(99,102,241,.35); color: var(--fg1); border-color: rgba(99,102,241,.65); }
 }
 
 // ── Bloque origen del registro (fuente_carga) ────────────────────────────────
@@ -214,23 +213,23 @@
 .vyd-fuente-toggle {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-  color: rgba(255,255,255,.30); background: none; border: none; cursor: pointer;
+  color: var(--fg4); background: none; border: none; cursor: pointer;
   padding: 0; transition: color .15s;
-  &:hover { color: rgba(255,255,255,.55); }
+  &:hover { color: var(--fg3); }
 }
 
 .vyd-fuente-valor {
   margin-top: 6px; padding: 7px 10px;
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+  background: var(--bg-hover); border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 11px; color: rgba(255,255,255,.55);
+  font-size: 11px; color: var(--fg3);
   font-family: ui-monospace, monospace;
   word-break: break-all; line-height: 1.5;
 }
 
 .vyd-fuente-fecha {
   margin-top: 3px;
-  font-size: 10px; color: rgba(255,255,255,.30);
+  font-size: 10px; color: var(--fg4);
   font-family: ui-monospace, monospace;
 }
 
@@ -240,9 +239,9 @@
 .vyd-hist-toggle {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-  color: rgba(255,255,255,.38); background: none; border: none; cursor: pointer;
+  color: var(--fg4); background: none; border: none; cursor: pointer;
   padding: 0; transition: color .15s;
-  &:hover { color: rgba(255,255,255,.65); }
+  &:hover { color: var(--fg2); }
 }
 
 .vyd-hist-chevron {
@@ -255,7 +254,7 @@
 }
 
 .vyd-hist-item {
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  background: var(--bg-hover); border: 1px solid var(--border);
   border-radius: 8px; padding: 9px 12px;
 }
 
@@ -269,26 +268,26 @@
 }
 
 .vyd-hist-viejo {
-  font-size: 11.5px; color: rgba(255,255,255,.45); text-decoration: line-through;
+  font-size: 11.5px; color: var(--fg4); text-decoration: line-through;
 }
 
-.vyd-hist-arrow { font-size: 12px; color: rgba(255,255,255,.25); }
+.vyd-hist-arrow { font-size: 12px; color: var(--fg4); }
 
 .vyd-hist-nuevo {
   font-size: 11.5px; font-weight: 700; color: #86efac;
 }
 
 .vyd-hist-meta {
-  font-size: 10.5px; color: rgba(255,255,255,.38); display: flex; gap: 10px;
+  font-size: 10.5px; color: var(--fg4); display: flex; gap: 10px;
   flex-wrap: wrap; margin-bottom: 3px;
 }
 
 .vyd-hist-fecha {
-  color: rgba(255,255,255,.28); font-variant-numeric: tabular-nums;
+  color: var(--fg4); font-variant-numeric: tabular-nums;
 }
 
 .vyd-hist-just {
-  font-size: 11px; color: rgba(255,255,255,.50); font-style: italic;
+  font-size: 11px; color: var(--fg3); font-style: italic;
   margin-top: 4px; line-height: 1.45;
   border-left: 2px solid rgba(99,102,241,.40); padding-left: 8px;
 }
@@ -305,85 +304,3 @@
 // Animaciones
 @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes drawerIn  { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-// ── Tema claro ────────────────────────────────────────────────────────────────
-:root[data-theme="light"] {
-  .vyd-drawer-overlay { background: rgba(0,0,0,.35); backdrop-filter: blur(4px); }
-
-  .vyd-drawer {
-    background: rgba(247,245,239,.98);
-    border-left-color: rgba(0,0,0,.10);
-    box-shadow: -12px 0 50px rgba(0,0,0,.15);
-    backdrop-filter: blur(20px);
-  }
-
-  .vyd-drawer-head {
-    background: rgba(255,255,255,.96);
-    border-bottom-color: rgba(0,0,0,.08);
-    // Mantiene la línea amarilla Euro
-  }
-
-  .vyd-drawer-person { color: #1A1A1F; }
-  .vyd-drawer-doc    { color: #6B6A60; }
-
-  .vyd-drawer-close {
-    background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.12); color: #3A3935;
-    &:hover { background: rgba(0,0,0,.12); }
-  }
-
-  .vyd-person-field {
-    background: #ffffff; border-color: rgba(0,0,0,.08);
-    box-shadow: 0 1px 4px rgba(0,0,0,.04);
-  }
-  .vyd-person-lbl { color: #B0AEA4; }
-  .vyd-person-val { color: #1A1A1F; }
-
-  .vyd-sec-title {
-    color: #6366f1; border-bottom-color: rgba(0,0,0,.08);
-  }
-
-  // Línea vertical del timeline en tema claro
-  .vyd-timeline::before {
-    background: linear-gradient(180deg, rgba(99,102,241,.5), rgba(139,92,246,.2));
-  }
-
-  .vyd-tl-card {
-    background: #ffffff; border-color: rgba(0,0,0,.09);
-    box-shadow: 0 1px 6px rgba(0,0,0,.05);
-    &:hover { background: #F7F5EF; }
-  }
-
-  .vyd-tl-node { background: #F7F5EF; }
-  .vyd-tl-line { background: linear-gradient(180deg, rgba(99,102,241,.35), rgba(139,92,246,.12)); }
-  .vyd-tl-card {
-    background: #ffffff; border-color: rgba(0,0,0,.09);
-    &:hover { background: #F7F5EF; }
-  }
-  .vyd-tl-sede    { color: #1A1A1F; }
-  .vyd-tl-fecha   { color: #B0AEA4; }
-  .vyd-tl-empresa { color: #3A3935; }
-  .vyd-tl-detalle { color: #6B6A60; }
-  .vyd-tl-retiro-block { background: rgba(239,68,68,.05); border-left-color: rgba(239,68,68,.35); }
-  .vyd-tl-retiro-fecha { color: #B0AEA4; }
-  .vyd-tl-motivo       { color: #5C5B54; }
-  .vyd-tl-motivo-lbl   { color: #B0AEA4; }
-
-  .vyd-fuente-toggle  { color: #C5C3BB; &:hover { color: #6B6A60; } }
-  .vyd-fuente-valor   { background: #f8f7f3; border-color: rgba(0,0,0,.07); color: #6B6A60; }
-  .vyd-fuente-fecha   { color: #B0AEA4; }
-
-  .vyd-tl-btn-edit {
-    background: rgba(99,102,241,.10); border-color: rgba(99,102,241,.25); color: #6366f1;
-    &:hover { background: rgba(99,102,241,.20); color: #4f46e5; }
-  }
-
-  .vyd-hist-toggle  { color: #B0AEA4; &:hover { color: #6B6A60; } }
-  .vyd-hist-item    { background: #f8f7f3; border-color: rgba(0,0,0,.07); }
-  .vyd-hist-campo   { color: #6366f1; }
-  .vyd-hist-viejo   { color: #9B9A92; }
-  .vyd-hist-arrow   { color: #C5C3BB; }
-  .vyd-hist-nuevo   { color: #16a34a; }
-  .vyd-hist-meta    { color: #9B9A92; }
-  .vyd-hist-fecha   { color: #C5C3BB; }
-  .vyd-hist-just    { color: #6B6A60; border-left-color: rgba(99,102,241,.30); }
-}

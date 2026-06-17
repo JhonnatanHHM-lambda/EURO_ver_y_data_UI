@@ -64,6 +64,20 @@ const Modal = ({ tab, editing, form, errores, cambiarForm, guardar, cerrarModal 
                                 {errores.codigo && <span className="adm-field-err">{errores.codigo}</span>}
                                 <span className="adm-field-hint">Identificador único. Solo letras, números y guiones.</span>
                             </div>
+                            <div className="adm-field">
+                                <label>Días de alerta al director</label>
+                                <input
+                                    type="number"
+                                    value={form.dias_alerta_director ?? 5}
+                                    onChange={e => {
+                                        const v = parseInt(e.target.value) || 5;
+                                        cambiarForm('dias_alerta_director', Math.max(5, v));
+                                    }}
+                                    min={5}
+                                    max={60}
+                                />
+                                <span className="adm-field-hint">Mínimo 5 días. El director recibirá una notificación este número de días antes del vencimiento del contrato.</span>
+                            </div>
                         </>
                     ) : (
                         <div className="adm-field">

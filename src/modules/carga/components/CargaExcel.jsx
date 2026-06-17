@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { FiUpload, FiCheckCircle, FiAlertCircle, FiArrowRight, FiRefreshCw,
-         FiFile, FiAlertTriangle, FiMapPin, FiCheck, FiPlus, FiEdit3 } from 'react-icons/fi';
+         FiFile, FiAlertTriangle, FiMapPin, FiCheck, FiPlus, FiEdit3, FiDownload } from 'react-icons/fi';
 import swal from '../../../utils/swal';
 import api from '../../../services/api';
 import useCargaExcel from '../hooks/useCargaExcel';
+import Pandape from './Pandape';
 import '../utils/CargaExcel.scss';
 
 const CargaExcel = () => {
@@ -24,6 +26,8 @@ const CargaExcel = () => {
         irAResolverSedes, irAConfirmar, ejecutarCarga, reiniciar,
         irAPaso, camposDisponibles,
     } = useCargaExcel();
+
+    const [tabActivo, setTabActivo] = useState('excel');
 
     // Columnas con advertencia → para marcarlas en la tabla
     const columnasConAdvertencia = new Set(advertenciasMapeo.map(a => a.columna_excel));
@@ -329,7 +333,35 @@ const CargaExcel = () => {
                     <h1 className="vyd-page-title"><FiUpload size={20} /> Carga de datos</h1>
                     <p className="vyd-page-sub">Importación y homologación de bases de datos</p>
                 </div>
+                <a
+                    href={`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/'}trazabilidad/plantilla-carga/`}
+                    download
+                    className="vyd-btn-sm ghost"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+                >
+                    <FiDownload size={13} /> Descargar plantilla
+                </a>
             </div>
+
+            {/* Tabs */}
+            <div className="vyd-tabs-bar">
+                <button
+                    className={`vyd-tab-btn${tabActivo === 'excel' ? ' active' : ''}`}
+                    onClick={() => setTabActivo('excel')}
+                >
+                    Carga Excel
+                </button>
+                <button
+                    className={`vyd-tab-btn${tabActivo === 'pandape' ? ' active' : ''}`}
+                    onClick={() => setTabActivo('pandape')}
+                >
+                    Verificación PandaPé
+                </button>
+            </div>
+
+            {tabActivo === 'pandape' && <Pandape />}
+
+            {tabActivo === 'excel' && <>
 
             {/* Stepper */}
             {paso < 4 && (
@@ -1008,6 +1040,8 @@ const CargaExcel = () => {
                     </button>
                 </div>
             )}
+
+            </>}
         </div>
     );
 };

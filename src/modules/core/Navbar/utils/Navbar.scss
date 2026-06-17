@@ -162,7 +162,7 @@
 .vyd-notif-dropdown {
   position: absolute; top: calc(100% + 10px); right: 0;
   width: 360px; max-height: 520px; overflow-y: auto;
-  background: var(--surface); border: 1px solid var(--border2);
+  background: var(--bg-modal); border: 1px solid var(--border2);
   border-radius: $radius-lg; box-shadow: 0 16px 48px rgba(0,0,0,.35);
   z-index: 200;
 }
@@ -171,7 +171,7 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 16px; border-bottom: 1px solid var(--border);
   font-size: 12.5px; font-weight: 700; color: var(--fg1);
-  position: sticky; top: 0; background: var(--surface); z-index: 1;
+  position: sticky; top: 0; background: var(--bg-modal); z-index: 1;
 }
 .vyd-notif-count {
   font-size: 10px; padding: 2px 7px; border-radius: 999px;
@@ -189,7 +189,22 @@
   border-bottom: 1px solid var(--border); transition: background .12s;
   position: relative;
   &:last-child { border-bottom: none; }
-  &:not(.leida) { background: rgba(99,102,241,.04); }
+
+  // No leída: tinte accent más visible + punto indicador
+  &:not(.leida) {
+    background: rgba(99,102,241,.10);
+    border-left: 2px solid rgba(99,102,241,.45);
+    padding-left: 14px; // compensar border-left
+  }
+
+  // Leída: fondo ligeramente más oscuro y texto atenuado para indicar "ya vista"
+  &.leida {
+    background: rgba(0,0,0,.07);
+    .vyd-notif-titulo { color: var(--fg2); }
+    .vyd-notif-cuerpo { opacity: 0.65; }
+    .vyd-notif-fecha  { opacity: 0.6; }
+  }
+
   &:hover { background: var(--bg-hover); }
 }
 
@@ -198,6 +213,23 @@
   background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.2);
   display: flex; align-items: center; justify-content: center;
   color: var(--accent); margin-top: 2px;
+  &.contrato {
+    background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.25);
+    color: #f59e0b;
+  }
+  &.urgente {
+    background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.25);
+    color: #ef4444;
+  }
+}
+
+.vyd-notif-item.clickeable {
+  cursor: pointer;
+  // No leída: hover más pronunciado con título accent
+  &:not(.leida):hover { background: var(--bg-hover2); }
+  &:not(.leida):hover .vyd-notif-titulo { color: var(--accent); }
+  // Leída: hover sutil (solo ilumina un poco)
+  &.leida:hover { background: var(--bg-hover); }
 }
 
 .vyd-notif-body { flex: 1; min-width: 0; }
@@ -260,8 +292,17 @@
 @media (max-width: $bp-sm) {
   .vyd-topbar { padding: 0 10px; gap: 6px; }
 
-  // Solo mostrar: burger | título | sede-pill | theme-toggle | avatar
-  .vyd-icon-btn { display: none; } // Ocultar campana en mobile
+  // Ocultar botones icon excepto la campana de notificaciones
+  .vyd-icon-btn { display: none; }
+  .vyd-notif-wrap .vyd-icon-btn { display: inline-flex; } // Siempre visible
+
+  // Dropdown de notificaciones: ocupa el ancho de pantalla en mobile
+  .vyd-notif-dropdown {
+    width: calc(100vw - 20px);
+    right: -10px;
+    max-width: 360px;
+  }
+
   .vyd-sede-pill { max-width: 120px; font-size: 11px; padding: 6px 10px;
     span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; display: block; } }
 
