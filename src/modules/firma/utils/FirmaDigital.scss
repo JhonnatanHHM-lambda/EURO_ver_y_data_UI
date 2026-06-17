@@ -3,6 +3,8 @@
 * { box-sizing: border-box; }
 
 .firma-page {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%);
   display: flex;
@@ -150,23 +152,47 @@
   strong { color: #f1f5f9; font-weight: 700; }
 }
 
-// ── PDF preview ────────────────────────────────────────────────────────────────
+// ── PDF preview / documentos ──────────────────────────────────────────────────
 .firma-pdf-preview {
   background: #0f172a;
   border: 1px solid #334155;
   border-radius: 10px;
   padding: 14px 18px;
   margin-bottom: 18px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .firma-pdf-label {
-  font-size: 12px; color: #94a3b8; margin: 0;
+  font-size: 12px; color: #94a3b8; margin: 0; font-weight: 600;
 }
 .firma-pdf-link {
   font-size: 13px; font-weight: 600; color: #6366f1;
   text-decoration: none;
   &:hover { text-decoration: underline; }
+}
+
+.firma-docs-list {
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.firma-doc-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px;
+  background: #1e293b; border: 1px solid #334155;
+  border-radius: 8px; text-decoration: none;
+  font-size: 13px; color: #cbd5e1;
+  transition: background .12s, border-color .12s;
+
+  span { font-size: 13px; }
+
+  &:hover {
+    background: #263348;
+    border-color: rgba(99, 102, 241, .4);
+  }
+}
+
+.firma-doc-ver {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; color: #6366f1; flex-shrink: 0;
 }
 
 // ── Aviso legal ────────────────────────────────────────────────────────────────
@@ -177,6 +203,25 @@
   border-radius: 8px; padding: 12px 14px;
   margin-bottom: 20px;
   strong { color: #a5b4fc; }
+}
+
+// ── PDF embed (paso 2) ────────────────────────────────────────────────────────
+.firma-pdf-embed-wrap {
+  margin-bottom: 20px;
+}
+.firma-pdf-embed-label {
+  font-size: 11px; color: #475569; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px;
+}
+.firma-pdf-iframe {
+  width: 100%; height: 520px; border: 1px solid #334155;
+  border-radius: 10px; background: #fff;
+  @media (max-width: 640px) { height: 360px; }
+}
+.firma-pdf-nueva-tab {
+  display: inline-block; margin-top: 6px;
+  font-size: 12px; color: #6366f1; text-decoration: none;
+  &:hover { text-decoration: underline; }
 }
 
 // ── Canvas de firma ────────────────────────────────────────────────────────────

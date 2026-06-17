@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser, FiAlertCircle, FiShield, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser, FiAlertCircle, FiShield, FiEye, FiEyeOff, FiUserX } from 'react-icons/fi';
 import DataTable from '../../core/Tabla/components/DataTable.jsx';
 import Modal from '../../core/Modal/components/Modal.jsx';
 import useUsuarios from '../hooks/useUsuarios.jsx';
@@ -19,7 +19,7 @@ const Usuarios = () => {
     const {
         usuarios, roles, loading, modalOpen, editing,
         search, setSearch, formData, setFormData, erroresCampos,
-        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, eliminar,
+        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar,
     } = useUsuarios();
 
     const update = (campo, val) => setFormData(f => ({ ...f, [campo]: val }));
@@ -85,8 +85,16 @@ const Usuarios = () => {
                     emptyMessage="No se encontraron usuarios"
                     renderActions={(row) => (
                         <div className="table-actions">
-                            <button className="action-btn edit" onClick={() => abrirModalEditar(row)} title="Editar"><FiEdit2 size={14} /></button>
-                            <button className="action-btn delete" onClick={() => eliminar(row)} title="Eliminar"><FiTrash2 size={14} /></button>
+                            <button className="action-btn edit" onClick={() => abrirModalEditar(row)} title="Editar usuario"><FiEdit2 size={14} /></button>
+                            <button
+                                className="action-btn"
+                                onClick={() => desactivar(row)}
+                                title={row.is_active ? 'Desactivar usuario' : 'Usuario ya inactivo'}
+                                style={{ color: row.is_active ? '#f59e0b' : 'var(--fg4)', opacity: row.is_active ? 1 : 0.4 }}
+                            >
+                                <FiUserX size={14} />
+                            </button>
+                            <button className="action-btn delete" onClick={() => eliminar(row)} title="Eliminar usuario permanentemente"><FiTrash2 size={14} /></button>
                         </div>
                     )}
                 />

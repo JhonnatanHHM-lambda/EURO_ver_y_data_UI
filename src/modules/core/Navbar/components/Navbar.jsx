@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiBell, FiMenu, FiSun, FiMoon, FiMapPin, FiChevronDown, FiX,
-         FiLock, FiCheck, FiAlertCircle, FiEye, FiEyeOff, FiLogOut } from 'react-icons/fi';
+         FiLock, FiCheck, FiAlertCircle, FiEye, FiEyeOff, FiLogOut,
+         FiFileText, FiRefreshCw, FiXCircle, FiCheckCircle } from 'react-icons/fi';
 import { useTheme } from '../../../../context/ThemeContext.jsx';
 import { useSede }  from '../../../../context/SedeContext.jsx';
 import swal from '../../../../utils/swal';
@@ -26,10 +27,12 @@ const Navbar = ({ titulo, subtitulo, onMenuClick }) => {
     const notifRef   = useRef(null);
     const userMenuRef = useRef(null);
 
-    const user      = JSON.parse(localStorage.getItem('user') || '{}');
-    const initials  = `${(user.nombres || 'U')[0]}${(user.apellidos || '')[0] || ''}`.toUpperCase();
-    const fullName  = `${user.nombres || ''} ${user.apellidos || ''}`.trim();
-    const esAdmin   = user.is_superuser || (user.permisos_rol || []).includes('can_manage_users');
+    const user            = JSON.parse(localStorage.getItem('user') || '{}');
+    const initials        = `${(user.nombres || 'U')[0]}${(user.apellidos || '')[0] || ''}`.toUpperCase();
+    const fullName        = `${user.nombres || ''} ${user.apellidos || ''}`.trim();
+    const permisos        = user.permisos_rol || [];
+    const esAdmin         = user.is_superuser || permisos.includes('can_manage_users');
+    const puedeVerNotif   = esAdmin || permisos.includes('can_view_contratos');
 
     // ── Logout ────────────────────────────────────────────────────────────────
     const handleLogout = async () => {
@@ -48,32 +51,35 @@ const Navbar = ({ titulo, subtitulo, onMenuClick }) => {
 
     // ── Notificaciones ────────────────────────────────────────────────────────
     const cargarNotificaciones = useCallback(async () => {
-        if (!esAdmin) return;
+        if (!puedeVerNotif) return;
         try {
             const r = await api.get('admin/notificaciones/');
             setNotifs(r.data.notificaciones || []);
             setNoLeidas(r.data.no_leidas || 0);
         } catch { /* silencioso */ }
-    }, [esAdmin]);
+    }, [puedeVerNotif]);
 
     useEffect(() => { cargarNotificaciones(); }, [cargarNotificaciones]);
 
     useEffect(() => {
-        if (!esAdmin) return;
+        if (!puedeVerNotif) return;
         const interval = setInterval(cargarNotificaciones, 60000);
         return () => clearInterval(interval);
-    }, [esAdmin, cargarNotificaciones]);
+    }, [puedeVerNotif, cargarNotificaciones]);
 
-    const abrirNotif = async () => {
+    const abrirNotif = () => {
         setNotifOpen(o => !o);
         setUserMenuOpen(false);
         setResolviendo(null); setNuevaPass('');
-        if (!notifOpen && noLeidas > 0) {
-            const noLeidasItems = notifs.filter(n => !n.leida);
-            await Promise.all(noLeidasItems.map(n => api.put(`admin/notificaciones/${n.id}/`).catch(() => {})));
-            cargarNotificaciones();
-        }
     };
+
+    const marcarLeida = useCallback((id) => {
+        const notif = notifs.find(n => n.id === id);
+        if (!notif || notif.leida) return;
+        setNotifs(prev => prev.map(n => n.id === id ? { ...n, leida: true } : n));
+        setNoLeidas(prev => Math.max(0, prev - 1));
+        api.put(`admin/notificaciones/${id}/`).catch(() => {});
+    }, [notifs]);
 
     const resolverTicket = async (solicitudId) => {
         if (!nuevaPass.trim() || nuevaPass.length < 8) {
@@ -147,7 +153,7 @@ const Navbar = ({ titulo, subtitulo, onMenuClick }) => {
                 </button>
 
                 {/* Campana */}
-                {esAdmin && (
+                {puedeVerNotif && (
                     <div className="vyd-notif-wrap" ref={notifRef}>
                         <button className="vyd-icon-btn" title="Notificaciones" onClick={abrirNotif}>
                             <FiBell size={16} />
@@ -168,8 +174,35 @@ const Navbar = ({ titulo, subtitulo, onMenuClick }) => {
                                         <span>Sin notificaciones</span>
                                     </div>
                                 ) : notifs.map(n => (
-                                    <div key={n.id} className={`vyd-notif-item${n.leida ? ' leida' : ''}`}>
-                                        <div className="vyd-notif-icon"><FiLock size={14} /></div>
+                                    <div
+                                        key={n.id}
+                                        className={`vyd-notif-item${n.leida ? ' leida' : ''} clickeable`}
+                                        onClick={() => {
+                                            marcarLeida(n.id);
+                                            if (n.contrato_id) {
+                                                setNotifOpen(false);
+                                                navigate(`/app/contratos?abrirContrato=${n.contrato_id}`);
+                                            }
+                                        }}
+                                        title={n.contrato_id ? 'Ver contrato' : (!n.leida ? 'Marcar como leída' : undefined)}
+                                    >
+                                        <div className={`vyd-notif-icon${
+                                            n.tipo === 'alerta_urgente' ? ' urgente'
+                                            : n.tipo === 'alerta_contrato' ? ' contrato'
+                                            : n.tipo === 'decision_director_terminacion' ? ' urgente'
+                                            : n.tipo === 'decision_director_prorroga' ? ' contrato'
+                                            : ''
+                                        }`}>
+                                            {n.tipo === 'alerta_urgente' || n.tipo === 'decision_director_terminacion'
+                                                ? <FiAlertCircle size={14} />
+                                                : n.tipo === 'alerta_contrato' || n.tipo === 'decision_director_prorroga'
+                                                    ? <FiRefreshCw size={14} />
+                                                    : n.tipo === 'condiciones_gh_listas'
+                                                        ? <FiCheckCircle size={14} style={{ color: '#a855f7' }} />
+                                                        : n.tipo === 'contrato_firmado_gh'
+                                                            ? <FiCheckCircle size={14} style={{ color: '#22c55e' }} />
+                                                            : <FiLock size={14} />}
+                                        </div>
                                         <div className="vyd-notif-body">
                                             <div className="vyd-notif-titulo">{n.titulo}</div>
                                             <div className="vyd-notif-cuerpo">{n.cuerpo}</div>
@@ -233,10 +266,6 @@ const Navbar = ({ titulo, subtitulo, onMenuClick }) => {
                             </div>
                         )}
                     </div>
-                )}
-
-                {!esAdmin && (
-                    <button className="vyd-icon-btn" title="Notificaciones"><FiBell size={16} /></button>
                 )}
 
                 <div className="vyd-tb-divider" />

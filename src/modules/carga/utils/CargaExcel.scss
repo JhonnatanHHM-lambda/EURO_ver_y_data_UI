@@ -357,3 +357,165 @@
   border-radius: 50%; animation: spin .6s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Tabs bar (Carga Excel / PandaPé) ──────────────────────────────────────────
+.vyd-tabs-bar {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  border-bottom: 2px solid var(--border2);
+}
+.vyd-tab-btn {
+  padding: 8px 20px; font-size: 13.5px; font-weight: 600;
+  color: var(--fg3); background: transparent; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: color .2s, border-color .2s;
+  &:hover { color: var(--fg1); }
+  &.active { color: var(--accent); border-bottom-color: var(--accent); }
+}
+
+// ── PandaPé — zona de carga ───────────────────────────────────────────────────
+.vyd-pp-dropzone {
+  border: 2px dashed var(--border2); border-radius: $radius-lg;
+  padding: 60px 24px; text-align: center; cursor: pointer;
+  background: var(--bg-input); transition: all .25s ease; margin-top: 8px;
+  &:hover, &.active {
+    border-color: var(--accent); background: rgba(99,102,241,0.06);
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.10);
+  }
+}
+.vyd-pp-drop-icon { font-size: 48px; margin-bottom: 14px; display: block;
+  filter: drop-shadow(0 0 14px rgba(139,92,246,.5)); }
+.vyd-pp-drop-title { font-weight: 700; color: var(--fg1); font-size: 15px; margin-bottom: 6px; }
+.vyd-pp-drop-hint  { font-size: 12.5px; color: var(--fg3); margin-bottom: 18px; }
+.vyd-pp-file-input { display: none; }
+
+// ── PandaPé — KPIs ────────────────────────────────────────────────────────────
+.vyd-pp-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;
+  @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); }
+}
+.vyd-pp-kpi {
+  background: var(--bg-panel); border: 1.5px solid var(--border2); border-radius: $radius-lg;
+  padding: 16px 20px; cursor: pointer; transition: box-shadow .2s, border-color .2s;
+  &:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(99,102,241,.12); }
+  &.active { border-color: var(--accent); background: rgba(99,102,241,0.05); }
+  &.green .vyd-pp-kpi-num { color: #22c55e; }
+  &.red   .vyd-pp-kpi-num { color: #ef4444; }
+  &.orange .vyd-pp-kpi-num { color: #f59e0b; }
+  &.mute  .vyd-pp-kpi-num { color: var(--fg2); }
+}
+.vyd-pp-kpi-num { font-size: 28px; font-weight: 800; line-height: 1; }
+.vyd-pp-kpi-lbl { font-size: 12px; color: var(--fg3); margin-top: 4px; display: block; }
+
+// ── PandaPé — sub-tabs resultados ─────────────────────────────────────────────
+.vyd-pp-tab-bar {
+  display: flex; gap: 4px; border-bottom: 1.5px solid var(--border2); margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.vyd-pp-tab {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 18px; font-size: 13px; font-weight: 600;
+  color: var(--fg3); background: transparent; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: color .2s, border-color .2s;
+  &:hover { color: var(--fg1); }
+  &.green.active { color: #22c55e; border-bottom-color: #22c55e; }
+  &.red.active   { color: #ef4444; border-bottom-color: #ef4444; }
+  &.orange.active { color: #f59e0b; border-bottom-color: #f59e0b; }
+  &.active { color: var(--accent); border-bottom-color: var(--accent); }
+}
+
+// ── PandaPé — toolbar ─────────────────────────────────────────────────────────
+.vyd-pp-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-bottom: 1px solid var(--border2); background: var(--bg-hover);
+}
+.vyd-pp-sede-select {
+  padding: 7px 12px; border-radius: $radius-md; font-size: 13px;
+  background: var(--bg-input); border: 1.5px solid var(--border2); color: var(--fg1);
+  outline: none; min-width: 200px;
+  &:focus { border-color: var(--accent); }
+}
+.vyd-pp-check-all {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--fg2); cursor: pointer;
+  input { accent-color: var(--accent); cursor: pointer; }
+}
+
+// ── PandaPé — tabla ───────────────────────────────────────────────────────────
+.vyd-pp-table-wrap { overflow-x: auto; }
+.vyd-pp-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  th {
+    background: var(--bg-hover); color: var(--fg3); font-size: 11.5px; font-weight: 700;
+    padding: 8px 12px; text-align: left; white-space: nowrap; text-transform: uppercase;
+    border-bottom: 1.5px solid var(--border2);
+  }
+  td {
+    padding: 9px 12px; border-bottom: 1px solid var(--border2); color: var(--fg2);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-hover); }
+  tr.selected td { background: rgba(99,102,241,0.05); }
+  input[type='checkbox'] { accent-color: var(--accent); cursor: pointer; }
+}
+
+// ── PandaPé — tarjetas con antecedentes ───────────────────────────────────────
+.vyd-pp-cards { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.vyd-pp-card {
+  background: var(--bg-panel); border: 1.5px solid var(--border2); border-radius: $radius-lg;
+  overflow: hidden; transition: border-color .2s;
+  &.danger   { border-left: 4px solid #ef4444; }
+  &.selected { border-color: var(--accent); background: rgba(99,102,241,0.04); }
+}
+.vyd-pp-card-header {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  cursor: pointer; user-select: none;
+  &:hover { background: var(--bg-hover); }
+}
+.vyd-pp-card-chevron { color: var(--fg3); transition: transform .2s; &.open { transform: rotate(180deg); } }
+.vyd-pp-card-info    { flex: 1; }
+.vyd-pp-card-name    { font-size: 14px; font-weight: 700; color: var(--fg1); }
+.vyd-pp-card-doc     { font-size: 12px; color: var(--fg3); font-family: $font-mono; }
+.vyd-pp-card-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.vyd-pp-card-check   { display: flex; align-items: center;
+  input { accent-color: var(--accent); cursor: pointer; transform: scale(1.2); } }
+.vyd-pp-card-info strong { font-size: 14px; font-weight: 700; color: var(--fg1); display: block; }
+.vyd-pp-card-info .mute  { font-size: 12px; color: var(--fg3); margin-right: 10px; }
+
+.vyd-pp-antec-wrap {
+  padding: 0 16px 14px; border-top: 1px solid var(--border2);
+  background: rgba(0,0,0,.015);
+}
+.vyd-pp-antec-title { font-size: 11.5px; font-weight: 700; color: var(--fg3);
+  text-transform: uppercase; margin: 10px 0 8px; }
+.vyd-pp-antec-table {
+  width: 100%; border-collapse: collapse; font-size: 12.5px;
+  th {
+    background: var(--bg-hover); color: var(--fg4); font-size: 11px; font-weight: 700;
+    padding: 6px 10px; text-align: left; text-transform: uppercase;
+  }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--border2); color: var(--fg2); }
+  tr:last-child td { border-bottom: none; }
+}
+
+// ── PandaPé — badge estado ────────────────────────────────────────────────────
+.vyd-pp-badge {
+  display: inline-flex; align-items: center; padding: 2px 9px;
+  border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
+  background: var(--bg-hover); color: var(--fg3);
+  &.HABILITADO               { background: rgba(16,185,129,.12); color: #059669; }
+  &.INHABILITADO             { background: rgba(239,68,68,.12);  color: #dc2626; }
+  &.REVISION_MANUAL_AUTORIZADA { background: rgba(245,158,11,.12); color: #d97706; }
+  &.REVISION_MANUAL_RECHAZADA  { background: rgba(239,68,68,.12);  color: #dc2626; }
+  &.RETIRADO                 { background: rgba(99,102,241,.10); color: #6366f1; }
+  &.ACTIVO                   { background: rgba(16,185,129,.12); color: #059669; }
+  &.danger                   { background: rgba(239,68,68,.12);  color: #dc2626; }
+  &.orange                   { background: rgba(245,158,11,.12); color: #d97706; }
+}
+
+// ── PandaPé — estado vacío ───────────────────────────────────────────────────
+.vyd-pp-empty {
+  text-align: center; padding: 40px 24px; color: var(--fg3);
+  font-size: 14px; line-height: 1.6;
+  span { display: block; font-size: 32px; margin-bottom: 10px; }
+}
