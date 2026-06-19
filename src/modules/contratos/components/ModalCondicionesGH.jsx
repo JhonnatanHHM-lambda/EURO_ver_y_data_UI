@@ -3,19 +3,16 @@ import { FiUpload, FiFile, FiTrash2 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 import Modal from '../../core/Modal/components/Modal';
 
-const DURACIONES = [
-    { value: '3_MESES',  label: '3 meses' },
-    { value: '6_MESES',  label: '6 meses' },
-    { value: '12_MESES', label: '12 meses' },
-];
+const MESES_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: i + 1 === 1 ? '1 mes' : `${i + 1} meses`,
+}));
 
 const ModalCondicionesGH = ({ contrato, onClose, onConfirmar }) => {
     const esPrrroga = contrato.tipo_carta === 'PRORROGA';
 
     // Prórroga
-    const [duracion, setDuracion]            = useState('3_MESES');
-    const [mantenerCond, setMantenerCond]    = useState(true);
-    const [nuevoSueldo, setNuevoSueldo]      = useState('');
+    const [meses, setMeses] = useState(3);
 
     // Terminación
     const [archivos, setArchivos]            = useState([]);
@@ -40,7 +37,7 @@ const ModalCondicionesGH = ({ contrato, onClose, onConfirmar }) => {
             icon: 'question',
             title: esPrrroga ? '¿Confirmar condiciones de prórroga?' : '¿Confirmar condiciones de terminación?',
             html: esPrrroga
-                ? `Se notificará al director que las condiciones de <strong>${DURACIONES.find(d => d.value === duracion)?.label}</strong> están listas para <strong>${contrato.nombre_completo}</strong>.`
+                ? `Se notificará al director que las condiciones de <strong>${meses === 1 ? '1 mes' : `${meses} meses`}</strong> están listas para <strong>${contrato.nombre_completo}</strong>.`
                 : `Se notificará al director que los documentos de terminación para <strong>${contrato.nombre_completo}</strong> están listos.`,
             showCancelButton: true,
             confirmButtonText: 'Confirmar',
@@ -52,11 +49,7 @@ const ModalCondicionesGH = ({ contrato, onClose, onConfirmar }) => {
         setEnviando(true);
         try {
             if (esPrrroga) {
-                await onConfirmar({
-                    duracion_prorroga: duracion,
-                    mantener_condiciones: mantenerCond,
-                    ...(nuevoSueldo && !mantenerCond ? { nuevo_sueldo: parseFloat(nuevoSueldo) } : {}),
-                });
+                await onConfirmar({ meses_prorroga: meses });
             } else {
                 const fd = new FormData();
                 archivos.forEach(f => fd.append('documentos', f));
@@ -77,49 +70,19 @@ const ModalCondicionesGH = ({ contrato, onClose, onConfirmar }) => {
                 <div className="ctr-decision-form">
                     <div className="vyd-form-group">
                         <label>Duración de la prórroga</label>
-                        <div className="ctr-radio-group">
-                            {DURACIONES.map(d => (
-                                <label key={d.value} className={`ctr-radio-opt${duracion === d.value ? ' selected' : ''}`}>
-                                    <input
-                                        type="radio"
-                                        name="duracion"
-                                        value={d.value}
-                                        checked={duracion === d.value}
-                                        onChange={() => setDuracion(d.value)}
-                                    />
-                                    {d.label}
-                                </label>
+                        <select
+                            value={meses}
+                            onChange={e => setMeses(parseInt(e.target.value))}
+                            className="ctr-input"
+                        >
+                            {MESES_OPTIONS.map(o => (
+                                <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
-                        </div>
+                        </select>
+                        <span style={{ fontSize: 11, color: 'var(--fg4)', marginTop: 4 }}>
+                            Las condiciones salariales se mantienen iguales.
+                        </span>
                     </div>
-
-                    <div className="vyd-form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <input
-                            type="checkbox"
-                            id="mantener-gh"
-                            checked={mantenerCond}
-                            onChange={e => setMantenerCond(e.target.checked)}
-                            style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
-                        />
-                        <label htmlFor="mantener-gh" style={{ cursor: 'pointer', userSelect: 'none', fontSize: 13, color: 'var(--fg2)', textTransform: 'none', letterSpacing: 0 }}>
-                            Mantener condiciones salariales actuales
-                        </label>
-                    </div>
-
-                    {!mantenerCond && (
-                        <div className="vyd-form-group">
-                            <label>Nuevo sueldo (COP)</label>
-                            <input
-                                type="number"
-                                placeholder="Ej: 1300000"
-                                value={nuevoSueldo}
-                                onChange={e => setNuevoSueldo(e.target.value)}
-                                min="0"
-                                step="50000"
-                                className="ctr-input"
-                            />
-                        </div>
-                    )}
                 </div>
             ) : (
                 <div className="ctr-decision-form">

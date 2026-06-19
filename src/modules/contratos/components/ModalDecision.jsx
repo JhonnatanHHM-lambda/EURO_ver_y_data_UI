@@ -11,13 +11,31 @@ const ModalDecision = ({ contrato, onClose, onConfirmar }) => {
         const { isConfirmed } = await Swal.fire({
             icon: 'question',
             title: esPrrroga ? '¿Confirmar decisión de prórroga?' : '¿Confirmar decisión de terminación?',
-            html: esPrrroga
+            html: (esPrrroga
                 ? `Se notificará a <strong>Gestión Humana</strong> para que defina las condiciones de la prórroga de <strong>${contrato.nombre_completo}</strong>.`
-                : `Se notificará a <strong>Gestión Humana</strong> para que gestione la terminación de <strong>${contrato.nombre_completo}</strong>.`,
+                : `Se notificará a <strong>Gestión Humana</strong> para que gestione la terminación de <strong>${contrato.nombre_completo}</strong>.`)
+                + `<br><br><small id="swal-dec-ctr" style="color:#94a3b8">Podrás confirmar en <strong id="swal-dec-sec">10</strong> segundo(s)</small>`,
             showCancelButton: true,
             confirmButtonText: 'Confirmar',
             cancelButtonText: 'Cancelar',
             confirmButtonColor: esPrrroga ? '#6366f1' : '#ef4444',
+            didOpen: () => {
+                const btn = Swal.getConfirmButton();
+                btn.disabled = true;
+                let secs = 10;
+                const interval = setInterval(() => {
+                    secs--;
+                    const secEl = document.getElementById('swal-dec-sec');
+                    const ctrEl = document.getElementById('swal-dec-ctr');
+                    if (secs <= 0) {
+                        clearInterval(interval);
+                        btn.disabled = false;
+                        if (ctrEl) ctrEl.style.display = 'none';
+                    } else {
+                        if (secEl) secEl.textContent = secs;
+                    }
+                }, 1000);
+            },
         });
         if (!isConfirmed) return;
 

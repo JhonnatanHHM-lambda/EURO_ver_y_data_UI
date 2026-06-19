@@ -1,12 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     FiBriefcase, FiSearch, FiRefreshCw, FiChevronDown, FiEye,
-    FiCheckCircle, FiFileText, FiAlertTriangle,
+    FiCheckCircle, FiFileText, FiAlertTriangle, FiCalendar, FiX, FiDownload,
 } from 'react-icons/fi';
+import Swal from 'sweetalert2';
 import api from '../../../services/api';
 import ContratoDetalle from '../../contratos/components/ContratoDetalle';
 import { TIPO_CARTA_LABEL } from '../../contratos/hooks/useContratos';
+import DateRangePicker from './DateRangePicker';
 import '../utils/Contrataciones.scss';
+
+const MESES_C_CTN = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fmtShort = (s) => {
+    if (!s) return '';
+    const [, m, d] = s.split('-');
+    return `${parseInt(d)} ${MESES_C_CTN[parseInt(m) - 1]}`;
+};
 
 const fmtFecha = (f) =>
     f ? new Date(f + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -21,19 +30,26 @@ const TIPO_ICON = {
 };
 
 const Contrataciones = () => {
-    const [search, setSearch]       = useState('');
-    const [data, setData]           = useState({ empleados: [], total_empleados: 0, total_contratos: 0 });
-    const [loading, setLoading]     = useState(true);
+    const [search, setSearch]         = useState('');
+    const [data, setData]             = useState({ empleados: [], total_empleados: 0, total_contratos: 0 });
+    const [loading, setLoading]       = useState(true);
     const [expandidos, setExpandidos] = useState({});
     const [contratoId, setContratoId] = useState(null);
+    const [filtroFecha, setFiltroFecha] = useState(null);
+    const [showPicker, setShowPicker]   = useState(false);
+    const [descargando, setDescargando] = useState(false);
+    const pickerRef = useRef(null);
 
-    const cargar = useCallback(async (q = '') => {
+    const cargar = useCallback(async (q = '', filtro = null) => {
         setLoading(true);
         try {
-            const params = q ? `?search=${encodeURIComponent(q)}` : '';
-            const res = await api.get(`contratos/contrataciones/${params}`);
+            const params = new URLSearchParams();
+            if (q) params.set('search', q);
+            if (filtro?.desde) params.set('fecha_desde', filtro.desde);
+            if (filtro?.hasta) params.set('fecha_hasta', filtro.hasta);
+            const qs = params.toString() ? `?${params.toString()}` : '';
+            const res = await api.get(`contratos/contrataciones/${qs}`);
             setData(res.data);
-            // Expandir todos por defecto si hay pocos empleados
             if (res.data.total_empleados <= 5) {
                 const exp = {};
                 res.data.empleados.forEach(e => { exp[e.documento_id] = true; });
@@ -48,6 +64,65 @@ const Contrataciones = () => {
 
     useEffect(() => { cargar(); }, [cargar]);
 
+    useEffect(() => {
+        if (!showPicker) return;
+        const handler = (e) => {
+            if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+                setShowPicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [showPicker]);
+
+    const handleFiltroFecha = (desde, hasta) => {
+        const filtro = { desde, hasta };
+        setFiltroFecha(filtro);
+        setShowPicker(false);
+        cargar(search, filtro);
+    };
+    const handleLimpiarFecha = () => {
+        setFiltroFecha(null);
+        setShowPicker(false);
+        cargar(search, null);
+    };
+
+    const handleDescargar = async () => {
+        if (!filtroFecha) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Filtro de fechas requerido',
+                text: 'Debes aplicar un filtro por rango de fechas antes de descargar el reporte.',
+                confirmButtonColor: '#0ea5e9',
+                confirmButtonText: 'Entendido',
+            });
+            return;
+        }
+        setDescargando(true);
+        try {
+            const params = new URLSearchParams();
+            if (search) params.set('search', search);
+            params.set('fecha_desde', filtroFecha.desde);
+            params.set('fecha_hasta', filtroFecha.hasta);
+            const res = await api.get(
+                `contratos/contrataciones/reporte/?${params.toString()}`,
+                { responseType: 'blob' },
+            );
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `contrataciones_${filtroFecha.desde}_a_${filtroFecha.hasta}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el reporte. Inténtalo de nuevo.' });
+        } finally {
+            setDescargando(false);
+        }
+    };
+
     const toggleEmpleado = (docId) =>
         setExpandidos(p => ({ ...p, [docId]: !p[docId] }));
 
@@ -59,7 +134,7 @@ const Contrataciones = () => {
                     <h1 className="vyd-page-title"><FiBriefcase size={20} /> Contrataciones</h1>
                     <p className="vyd-page-sub">Historial de documentos firmados por empleado</p>
                 </div>
-                <button className="vyd-btn-sm ghost" onClick={() => cargar(search)} title="Recargar">
+                <button className="vyd-btn-sm ghost" onClick={() => cargar(search, filtroFecha)} title="Recargar">
                     <FiRefreshCw size={13} />
                 </button>
             </div>
@@ -87,9 +162,46 @@ const Contrataciones = () => {
                             placeholder="Buscar por nombre o documento..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && cargar(search)}
+                            onKeyDown={e => e.key === 'Enter' && cargar(search, filtroFecha)}
                         />
                     </div>
+                    {/* Filtro por rango de fecha de firma */}
+                    <div style={{ position: 'relative', flexShrink: 0 }} ref={pickerRef}>
+                        <button
+                            className={`vyd-btn-sm${filtroFecha ? '' : ' ghost'}`}
+                            onClick={() => setShowPicker(p => !p)}
+                            style={{ gap: 5, whiteSpace: 'nowrap' }}
+                        >
+                            <FiCalendar size={13} />
+                            {filtroFecha
+                                ? `${fmtShort(filtroFecha.desde)} → ${fmtShort(filtroFecha.hasta)}`
+                                : 'Filtrar'}
+                            {filtroFecha && (
+                                <FiX size={11}
+                                    onClick={e => { e.stopPropagation(); handleLimpiarFecha(); }}
+                                    style={{ marginLeft: 2, opacity: .7 }}
+                                />
+                            )}
+                        </button>
+                        {showPicker && (
+                            <DateRangePicker
+                                value={filtroFecha}
+                                onChange={handleFiltroFecha}
+                                onClear={handleLimpiarFecha}
+                            />
+                        )}
+                    </div>
+                    {/* Descarga Excel */}
+                    <button
+                        className="vyd-btn-sm ghost"
+                        onClick={handleDescargar}
+                        disabled={descargando}
+                        title={filtroFecha ? 'Descargar reporte Excel' : 'Aplica un filtro de fechas para descargar'}
+                        style={{ gap: 5, flexShrink: 0 }}
+                    >
+                        <FiDownload size={13} />
+                        {descargando ? 'Generando…' : 'Excel'}
+                    </button>
                 </div>
 
                 {/* Lista */}
@@ -99,8 +211,8 @@ const Contrataciones = () => {
                     </div>
                 ) : data.empleados.length === 0 ? (
                     <div className="vyd-tbl-empty">
-                        {search
-                            ? 'Sin resultados para la búsqueda.'
+                        {search || filtroFecha
+                            ? 'Sin resultados para los filtros aplicados.'
                             : 'No hay contratos firmados aún.'}
                     </div>
                 ) : (
@@ -190,7 +302,7 @@ const Contrataciones = () => {
                     onClose={() => setContratoId(null)}
                     onProrrogar={() => Promise.resolve(false)}
                     onTerminar={() => Promise.resolve(false)}
-                    onActualizado={() => { setContratoId(null); cargar(search); }}
+                    onActualizado={() => { setContratoId(null); cargar(search, filtroFecha); }}
                 />
             )}
         </div>
