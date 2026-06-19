@@ -68,6 +68,7 @@ const Pandape = () => {
     const [cargando, setCargando] = useState(false);
     const [sedes, setSedes] = useState([]);
     const [sedeIncorporar, setSedeIncorporar] = useState('');
+    const [nombreArchivo, setNombreArchivo] = useState('');
     const inputRef = useRef();
 
     useEffect(() => {
@@ -77,6 +78,7 @@ const Pandape = () => {
     const procesar = async (archivo) => {
         setCargando(true);
         setFase('procesando');
+        setNombreArchivo(archivo.name);
         const fd = new FormData();
         fd.append('archivo', archivo);
         try {
@@ -147,6 +149,7 @@ const Pandape = () => {
             const { data } = await api.post('trazabilidad/pandape/confirmar/', {
                 candidatos,
                 sede_id: sedeIncorporar || null,
+                nombre_archivo: nombreArchivo || 'Reporte PandaPé',
             });
             swal({ title: 'Listo', text: data.mensaje, icon: 'success' });
             const docs = new Set(candidatos.map(c => c.documento_id));

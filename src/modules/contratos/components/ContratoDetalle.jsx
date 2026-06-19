@@ -3,7 +3,9 @@ import {
     FiX, FiUser, FiCalendar, FiMapPin, FiMail, FiPhone,
     FiFileText, FiClock, FiAlertTriangle, FiCheckCircle,
     FiExternalLink, FiDownload, FiMessageSquare, FiBell, FiAlertCircle,
+    FiEdit2, FiSend, FiCheck,
 } from 'react-icons/fi';
+import Swal from 'sweetalert2';
 import api from '../../../services/api';
 import ModalDecision from './ModalDecision';
 import ModalCondicionesGH from './ModalCondicionesGH';
@@ -91,12 +93,18 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
     const [modalDecision, setModalDecision]     = useState(false);
     const [modalCondGH, setModalCondGH]         = useState(false);
     const [notificando, setNotificando]         = useState(false);
+    const [editContacto, setEditContacto]       = useState(false);
+    const [editEmail, setEditEmail]             = useState('');
+    const [editCelular, setEditCelular]         = useState('');
+    const [guardandoContacto, setGuardandoContacto] = useState(false);
+    const [reenviando, setReenviando]           = useState(false);
 
     const _user    = JSON.parse(localStorage.getItem('user') || '{}');
     const permisos = _user.permisos_rol || [];
     const esSU     = _user.is_superuser;
-    const esGH     = esSU || permisos.includes('can_set_condiciones_contratos');
-    const esDir    = esSU || permisos.includes('can_decide_contratos');
+    const esGH          = esSU || permisos.includes('can_set_condiciones_contratos');
+    const esDir         = esSU || permisos.includes('can_decide_contratos');
+    const puedeReenviar = esSU || permisos.includes('can_view_contratos');
 
     useEffect(() => {
         const cargar = async () => {
@@ -132,6 +140,67 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
         if (ok) onActualizado();
     };
 
+    const abrirEditContacto = () => {
+        setEditEmail(contrato?.email || '');
+        setEditCelular(contrato?.celular || '');
+        setEditContacto(true);
+    };
+
+    const handleGuardarContacto = async () => {
+        setGuardandoContacto(true);
+        try {
+            const res = await api.patch(`contratos/${contratoId}/contacto/`, { email: editEmail, celular: editCelular });
+            setContrato(prev => ({ ...prev, email: res.data.email, celular: res.data.celular }));
+            setEditContacto(false);
+        } catch (e) {
+            const msg = e.response?.data?.error || 'No se pudo guardar el contacto.';
+            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+        } finally {
+            setGuardandoContacto(false);
+        }
+    };
+
+    const handleReenviarNotificacion = async () => {
+        const { isConfirmed } = await Swal.fire({
+            icon: 'question',
+            title: '¿Reenviar notificación?',
+            html: `Se enviará nuevamente el correo${contrato?.celular ? ' y WhatsApp' : ''} con el link de firma a <strong>${contrato?.nombre_completo}</strong>.<br><br><small id="swal-reenvio-ctr" style="color:#94a3b8">Podrás confirmar en <strong id="swal-reenvio-sec">10</strong> segundo(s)</small>`,
+            showCancelButton: true,
+            confirmButtonText: 'Reenviar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0ea5e9',
+            didOpen: () => {
+                const btn = Swal.getConfirmButton();
+                btn.disabled = true;
+                let secs = 10;
+                const interval = setInterval(() => {
+                    secs--;
+                    const secEl = document.getElementById('swal-reenvio-sec');
+                    const ctrEl = document.getElementById('swal-reenvio-ctr');
+                    if (secs <= 0) {
+                        clearInterval(interval);
+                        btn.disabled = false;
+                        if (ctrEl) ctrEl.style.display = 'none';
+                    } else {
+                        if (secEl) secEl.textContent = secs;
+                    }
+                }, 1000);
+            },
+        });
+        if (!isConfirmed) return;
+
+        setReenviando(true);
+        try {
+            await api.post(`contratos/${contratoId}/reenviar-notificacion/`);
+            Swal.fire({ icon: 'success', title: 'Notificación reenviada', text: 'El empleado recibirá el link de firma nuevamente.', timer: 2500, showConfirmButton: false });
+        } catch (e) {
+            const msg = e.response?.data?.error || 'No se pudo reenviar la notificación.';
+            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+        } finally {
+            setReenviando(false);
+        }
+    };
+
     // Fallback: el task puede fallar un día — cubrimos el umbral de la sede directamente
     const _hoy = new Date(); _hoy.setHours(0, 0, 0, 0);
     const _fechaFin = contrato?.fecha_finalizacion ? new Date(contrato.fecha_finalizacion + 'T00:00:00') : null;
@@ -146,8 +215,10 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
         contrato?.tipo_carta === 'NO_PRORROGA';
     // GH define condiciones: estado PENDIENTE_CONDICIONES_GH
     const puedeCondGH = esGH && contrato?.estado === 'PENDIENTE_CONDICIONES_GH';
-    // Director notifica al empleado: estado PENDIENTE_NOTIFICACION_EMPLEADO
-    const puedeNotificarEmpleado = esDir && contrato?.estado === 'PENDIENTE_NOTIFICACION_EMPLEADO';
+    // Notificar al empleado: TERMINACION → director, PRORROGA → GH
+    const puedeNotificarEmpleado = contrato?.estado === 'PENDIENTE_NOTIFICACION_EMPLEADO' && (
+        contrato?.tipo_carta === 'TERMINACION' ? esDir : esGH
+    );
 
     return (
         <>
@@ -218,20 +289,101 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
                                         <span className="ctr-info-value">{contrato.sede_nombre}{contrato.sede_codigo ? ` (${contrato.sede_codigo})` : ''}</span>
                                     </div>
                                 )}
-                                {contrato.email && (
-                                    <div className="ctr-info-row">
-                                        <span className="ctr-info-label"><FiMail size={11} /> Email</span>
-                                        <span className="ctr-info-value">{contrato.email}</span>
+                                {editContacto ? (
+                                    <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 0' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                            <label style={{ fontSize: 11, color: 'var(--fg3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <FiMail size={11} /> Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={editEmail}
+                                                onChange={e => setEditEmail(e.target.value)}
+                                                className="ctr-input"
+                                                style={{ fontSize: 12.5 }}
+                                                placeholder="correo@ejemplo.com"
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                            <label style={{ fontSize: 11, color: 'var(--fg3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <FiPhone size={11} /> Celular
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                value={editCelular}
+                                                onChange={e => setEditCelular(e.target.value)}
+                                                className="ctr-input"
+                                                style={{ fontSize: 12.5 }}
+                                                placeholder="3001234567"
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                                            <button
+                                                className="vyd-btn-sm"
+                                                onClick={handleGuardarContacto}
+                                                disabled={guardandoContacto}
+                                                style={{ fontSize: 12, padding: '5px 12px', gap: 5 }}
+                                            >
+                                                <FiCheck size={12} />
+                                                {guardandoContacto ? 'Guardando...' : 'Guardar'}
+                                            </button>
+                                            <button
+                                                className="vyd-btn-sm ghost"
+                                                onClick={() => setEditContacto(false)}
+                                                disabled={guardandoContacto}
+                                                style={{ fontSize: 12, padding: '5px 12px' }}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
                                     </div>
-                                )}
-                                {contrato.celular && (
-                                    <div className="ctr-info-row">
-                                        <span className="ctr-info-label"><FiPhone size={11} /> Celular</span>
-                                        <span className="ctr-info-value">{contrato.celular}</span>
-                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="ctr-info-row" style={{ gridColumn: '1 / -1' }}>
+                                            <span className="ctr-info-label"><FiMail size={11} /> Email</span>
+                                            <span className="ctr-info-value" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                {contrato.email || <span style={{ color: 'var(--fg4)' }}>—</span>}
+                                                <button
+                                                    onClick={abrirEditContacto}
+                                                    title="Editar contacto"
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--fg4)', display: 'flex', alignItems: 'center' }}
+                                                >
+                                                    <FiEdit2 size={11} />
+                                                </button>
+                                            </span>
+                                        </div>
+                                        <div className="ctr-info-row" style={{ gridColumn: '1 / -1' }}>
+                                            <span className="ctr-info-label"><FiPhone size={11} /> Celular</span>
+                                            <span className="ctr-info-value" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                {contrato.celular || <span style={{ color: 'var(--fg4)' }}>—</span>}
+                                                <button
+                                                    onClick={abrirEditContacto}
+                                                    title="Editar contacto"
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--fg4)', display: 'flex', alignItems: 'center' }}
+                                                >
+                                                    <FiEdit2 size={11} />
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
+
+                        {/* Reenviar notificación — disponible para can_view_contratos cuando el proceso no está cerrado */}
+                        {puedeReenviar && !['FIRMADO', 'CANCELADO'].includes(contrato.estado) && (
+                            <div style={{ padding: '0 0 6px' }}>
+                                <button
+                                    className="vyd-btn-sm ghost"
+                                    onClick={handleReenviarNotificacion}
+                                    disabled={reenviando}
+                                    style={{ width: '100%', justifyContent: 'center', gap: 6, fontSize: 12.5, padding: '7px 12px' }}
+                                >
+                                    <FiSend size={13} />
+                                    {reenviando ? 'Reenviando...' : 'Reenviar notificación al empleado'}
+                                </button>
+                            </div>
+                        )}
 
                         {/* Info contrato */}
                         <div className="ctr-section">
@@ -364,7 +516,9 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
                         {puedeNotificarEmpleado && (
                             <div className="ctr-actions-footer" style={{ marginBottom: 8 }}>
                                 <div style={{ background: 'rgba(168,85,247,.08)', border: '1px solid rgba(168,85,247,.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 10, fontSize: 12.5, color: '#a855f7', lineHeight: 1.5 }}>
-                                    Gestión Humana ya definió las condiciones. Notifica al empleado para que firme la carta.
+                                    {contrato.tipo_carta === 'PRORROGA'
+                                        ? 'Las condiciones de prórroga están definidas. Notifica al empleado para que firme la carta.'
+                                        : 'Gestión Humana ya definió las condiciones. Notifica al empleado para que firme la carta.'}
                                 </div>
                                 <button
                                     className="vyd-btn-sm"
