@@ -81,7 +81,11 @@ const AsignacionesCentro = ({ onClose }) => {
         }
     };
 
-    const usuariosAsignados = new Set(asignaciones.map(a => a.usuario));
+    const usuariosAsignadosEnSede = new Set(
+        asignaciones
+            .filter(a => String(a.sede) === String(form.sede))
+            .map(a => a.usuario)
+    );
 
     return (
         <>
@@ -112,9 +116,9 @@ const AsignacionesCentro = ({ onClose }) => {
                                 >
                                     <option value="">Selecciona un usuario...</option>
                                     {usuarios.map(u => (
-                                        <option key={u.id} value={u.id} disabled={usuariosAsignados.has(u.id)}>
+                                        <option key={u.id} value={u.id} disabled={usuariosAsignadosEnSede.has(u.id)}>
                                             {u.nombre_completo || `${u.nombres} ${u.apellidos}`} — {u.correo}
-                                            {usuariosAsignados.has(u.id) ? ' (ya asignado)' : ''}
+                                            {usuariosAsignadosEnSede.has(u.id) ? ' (ya asignado en esta sede)' : ''}
                                         </option>
                                     ))}
                                 </select>
