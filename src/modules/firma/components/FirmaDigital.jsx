@@ -4,7 +4,7 @@ import { FiCheckCircle, FiAlertTriangle, FiRotateCcw, FiFileText, FiExternalLink
 import axios from 'axios';
 import '../utils/FirmaDigital.scss';
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/';
 
 const fmtFecha = (f) =>
     f ? new Date(f + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
