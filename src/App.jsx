@@ -16,6 +16,7 @@ import AdminRegistros from './modules/adminRegistros/components/AdminRegistros.j
 import Contratos from './modules/contratos/components/Contratos.jsx';
 import Contrataciones from './modules/contrataciones/components/Contrataciones.jsx';
 import FirmaDigital from './modules/firma/components/FirmaDigital.jsx';
+import FirmaGH from './modules/firma-gh/components/FirmaGH.jsx';
 
 function App() {
     return (
@@ -101,6 +102,12 @@ function App() {
                         <Route path="/app/contrataciones" element={
                             <TienePermiso permiso="can_view_contrataciones">
                                 <Contrataciones />
+                            </TienePermiso>
+                        } />
+
+                        <Route path="/app/firma-gh" element={
+                            <TienePermiso permiso="can_manage_firma_gh">
+                                <FirmaGH />
                             </TienePermiso>
                         } />
                     </Route>
