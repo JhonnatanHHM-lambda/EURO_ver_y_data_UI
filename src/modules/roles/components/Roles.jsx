@@ -1,4 +1,4 @@
-import { FiPlus, FiEdit2, FiTrash2, FiShield, FiUsers, FiCheck, FiDatabase, FiUpload, FiGrid, FiMapPin, FiEdit, FiFileText, FiCheckSquare, FiZap, FiUserCheck, FiBriefcase } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiShield, FiUsers, FiCheck, FiDatabase, FiUpload, FiGrid, FiMapPin, FiEdit, FiFileText, FiCheckSquare, FiZap, FiUserCheck, FiBriefcase, FiPenTool } from 'react-icons/fi';
 import Modal from '../../core/Modal/components/Modal.jsx';
 import useRoles from '../hooks/useRoles.jsx';
 import '../utils/Roles.scss';
@@ -17,6 +17,7 @@ const PERMISOS_INFO = {
     can_escanear_siesa:           { label: 'Consultar SIESA',             desc: 'Ejecutar escaneo manual de contratos próximos a vencer',               icon: <FiZap size={14} />,         grupo: 'Vencimientos' },
     can_manage_asignaciones:      { label: 'Gestionar asignaciones',      desc: 'Asignar directores y gestores humanos a sedes',                        icon: <FiUserCheck size={14} />,   grupo: 'Vencimientos' },
     can_view_contrataciones:      { label: 'Ver contrataciones',          desc: 'Consultar historial de documentos firmados por empleado',              icon: <FiBriefcase size={14} />,   grupo: 'Vencimientos' },
+    can_manage_firma_gh:          { label: 'Gestionar firma GH',          desc: 'Crear y administrar la firma digital del empleador en los documentos',  icon: <FiPenTool size={14} />,     grupo: 'Vencimientos' },
     // Administración
     can_manage_users:       { label: 'Gestionar usuarios',          desc: 'Crear, editar y desactivar cuentas de usuario',               icon: <FiUsers size={14} />,       grupo: 'Administración' },
     can_manage_roles:       { label: 'Gestionar roles y permisos',  desc: 'Crear roles y asignar permisos a cada uno',                   icon: <FiShield size={14} />,      grupo: 'Administración' },

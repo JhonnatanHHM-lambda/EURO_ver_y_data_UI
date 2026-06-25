@@ -4,7 +4,7 @@ import {
     FiUsers, FiShield, FiUpload, FiGitBranch, FiLogOut,
     FiLayers, FiEdit, FiChevronDown, FiHome,
     FiFileText, FiBriefcase, FiSettings, FiServer,
-    FiFolder, FiZap, FiBox,
+    FiFolder, FiZap, FiBox, FiPenTool,
 } from 'react-icons/fi';
 import swal from '../../../../utils/swal';
 import api from '../../../../services/api';
@@ -20,6 +20,7 @@ const grupos = [
             { key: 'dashboard',    label: 'Dashboard',      icon: <FiHome size={16} />,       path: '/app/dashboard',       permiso: null,                    badge: 'Próximo' },
             { key: 'vencimientos',    label: 'Vencimientos',   icon: <FiFileText size={16} />,   path: '/app/contratos',         permiso: 'can_view_contratos' },
             { key: 'contrataciones',  label: 'Contrataciones', icon: <FiBriefcase size={16} />,  path: '/app/contrataciones',    permiso: 'can_view_contrataciones' },
+            { key: 'firma-gh',        label: 'Firma GH',       icon: <FiPenTool size={16} />,    path: '/app/firma-gh',          permiso: 'can_manage_firma_gh' },
             { key: 'trazabilidad', label: 'Trazabilidad',   icon: <FiGitBranch size={16} />,  path: '/app/trazabilidad',    permiso: 'can_view_trazabilidad' },
             { key: 'carga',        label: 'Carga de datos', icon: <FiUpload size={16} />,     path: '/app/carga',           permiso: 'can_upload_excel' },
             { key: 'hist-cargas',  label: 'Hist. Cargas',   icon: <FiServer size={16} />,     path: '/app/bd-centralizada', permiso: 'can_manage_cargas' },
