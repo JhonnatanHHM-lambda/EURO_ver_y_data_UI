@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     FiX, FiUser, FiCalendar, FiMapPin, FiMail, FiPhone,
     FiFileText, FiClock, FiAlertTriangle, FiCheckCircle,
-    FiExternalLink, FiDownload, FiMessageSquare, FiBell, FiAlertCircle,
+    FiExternalLink, FiDownload, FiBell, FiAlertCircle,
     FiEdit2, FiSend, FiCheck,
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
@@ -20,7 +20,6 @@ const fmtDatetime = (dt) =>
 const EVENTO_META = {
     GENERADO:           { icon: <FiFileText size={13} />,     color: '#6366f1', label: 'Contrato generado' },
     ENVIADO_EMAIL:      { icon: <FiMail size={13} />,         color: '#0ea5e9', label: 'Email enviado' },
-    ENVIADO_WA:         { icon: <FiMessageSquare size={13} />,color: '#22c55e', label: 'WhatsApp enviado' },
     ACCESO_FIRMA:       { icon: <FiExternalLink size={13} />, color: '#f59e0b', label: 'Acceso a firma' },
     FIRMADO:            { icon: <FiCheckCircle size={13} />,  color: '#16a34a', label: 'Firmado' },
     ESCALADO:           { icon: <FiAlertTriangle size={13} />, color: '#ef4444', label: 'Escalado a director' },
@@ -683,9 +682,9 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
                             <div className="ctr-section">
                                 <div className="ctr-section-title"><FiClock size={13} /> Historial</div>
                                 <div className="ctr-timeline">
-                                    {contrato.eventos.map((ev, idx) => {
+                                    {contrato.eventos.filter(ev => ev.tipo_evento !== 'ENVIADO_WA').map((ev, idx, arr) => {
                                         const meta = EVENTO_META[ev.tipo_evento] || { icon: <FiClock size={13} />, color: '#64748b', label: ev.tipo_evento };
-                                        const isLast = idx === contrato.eventos.length - 1;
+                                        const isLast = idx === arr.length - 1;
                                         return (
                                             <div key={ev.id} className={`ctr-tl-item${isLast ? ' last' : ''}`}>
                                                 <div className="ctr-tl-dot" style={{ background: meta.color }} />
