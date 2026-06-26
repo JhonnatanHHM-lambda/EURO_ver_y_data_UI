@@ -221,6 +221,12 @@ const FirmaDigital = () => {
     // ── Estado "listo" ────────────────────────────────────────────────────────
     const TIPO_CARTA_LABEL = { NO_PRORROGA: 'No prórroga', PRORROGA: 'Prórroga', TERMINACION: 'Terminación' };
     const secuencial = datos?.firma_previa_requerida;
+
+    // Construir URLs del proxy usando API_BASE (mismo esquema HTTPS que el frontend),
+    // en lugar de usar la URL del backend que puede ser HTTP cuando Django no está
+    // configurado con SECURE_PROXY_SSL_HEADER. Null si el backend indica que no hay PDF.
+    const pdfCartaIframeUrl      = datos?.pdf_carta_url      ? `${API_BASE}contratos/firma/${token}/pdf/`             : null;
+    const pdfNoProrrogaIframeUrl = datos?.pdf_no_prorroga_url ? `${API_BASE}contratos/firma/${token}/pdf-no-prorroga/` : null;
     const totalPasos = secuencial ? 3 : 2;
 
     // Etiquetas de los pasos en el indicador visual
@@ -301,15 +307,15 @@ const FirmaDigital = () => {
                             Lee el documento y dibuja tu firma en el recuadro de abajo.
                         </p>
 
-                        {datos?.pdf_no_prorroga_url && (
+                        {pdfNoProrrogaIframeUrl && (
                             <div className="firma-pdf-embed-wrap">
                                 <div className="firma-pdf-embed-label">Carta de no prórroga</div>
                                 <iframe
-                                    src={datos.pdf_no_prorroga_url}
+                                    src={pdfNoProrrogaIframeUrl}
                                     title="Carta de no prórroga"
                                     className="firma-pdf-iframe"
                                 />
-                                <a href={datos.pdf_no_prorroga_url} target="_blank" rel="noopener noreferrer"
+                                <a href={pdfNoProrrogaIframeUrl} target="_blank" rel="noopener noreferrer"
                                    className="firma-pdf-nueva-tab">
                                     Abrir en nueva pestaña →
                                 </a>
@@ -394,12 +400,12 @@ const FirmaDigital = () => {
                             </div>
                         </div>
 
-                        {(datos?.pdf_carta_url || datos?.documentos_adicionales?.length > 0) && (
+                        {(pdfCartaIframeUrl || datos?.documentos_adicionales?.length > 0) && (
                             <div className="firma-pdf-preview">
                                 <p className="firma-pdf-label">Documentos adjuntos:</p>
                                 <div className="firma-docs-list">
-                                    {datos?.pdf_carta_url && (
-                                        <a href={datos.pdf_carta_url} target="_blank" rel="noopener noreferrer"
+                                    {pdfCartaIframeUrl && (
+                                        <a href={pdfCartaIframeUrl} target="_blank" rel="noopener noreferrer"
                                             className="firma-doc-item">
                                             <FiCheckCircle size={14} style={{ color: '#16a34a', flexShrink: 0 }} />
                                             <span style={{ flex: 1 }}>Carta a firmar</span>
@@ -438,15 +444,15 @@ const FirmaDigital = () => {
                             Lee el documento y luego dibuja tu firma en el recuadro de abajo.
                         </p>
 
-                        {datos?.pdf_carta_url && (
+                        {pdfCartaIframeUrl && (
                             <div className="firma-pdf-embed-wrap">
                                 <div className="firma-pdf-embed-label">Documento a firmar</div>
                                 <iframe
-                                    src={datos.pdf_carta_url}
+                                    src={pdfCartaIframeUrl}
                                     title="Documento a firmar"
                                     className="firma-pdf-iframe"
                                 />
-                                <a href={datos.pdf_carta_url} target="_blank" rel="noopener noreferrer"
+                                <a href={pdfCartaIframeUrl} target="_blank" rel="noopener noreferrer"
                                    className="firma-pdf-nueva-tab">
                                     Abrir en nueva pestaña →
                                 </a>
