@@ -463,7 +463,8 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
                                 <div style={{ fontSize: 12.5, color: '#78350f', lineHeight: 1.5 }}>
                                     <strong>Carta de no prórroga pendiente de firma.</strong>
                                     {' '}El empleado todavía no ha firmado la carta de no prórroga original.
-                                    Cuando el director notifique, el empleado deberá firmarla primero antes de firmar
+                                    Cuando {contrato.tipo_carta === 'PRORROGA' ? 'GH' : 'el director'} notifique,
+                                    el empleado deberá firmarla primero antes de firmar
                                     la carta de {contrato.tipo_carta === 'PRORROGA' ? 'prórroga' : 'terminación'}.
                                 </div>
                             </div>
@@ -473,8 +474,10 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
                         {puedeCondGH && (
                             <div className="ctr-actions-footer" style={{ marginBottom: 8 }}>
                                 <div style={{ background: 'rgba(14,165,233,.08)', border: '1px solid rgba(14,165,233,.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 10, fontSize: 12.5, color: '#0ea5e9', lineHeight: 1.5 }}>
-                                    El director decidió <strong>{contrato.tipo_carta === 'PRORROGA' ? 'prorrogar' : 'terminar'}</strong> este contrato.
-                                    Define las condiciones para que el director pueda notificar al empleado.
+                                    Decidiste <strong>{contrato.tipo_carta === 'PRORROGA' ? 'prorrogar' : 'terminar'}</strong> este contrato.
+                                    Define las condiciones para {contrato.tipo_carta === 'PRORROGA'
+                                        ? 'notificar al empleado.'
+                                        : 'que el director pueda notificar al empleado.'}
                                 </div>
                                 <button
                                     className="vyd-btn-sm"
