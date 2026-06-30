@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser, FiAlertCircle, FiShield, FiEye, FiEyeOff, FiUserX, FiArchive } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser, FiAlertCircle, FiShield, FiEye, FiEyeOff, FiUserX, FiArchive, FiRefreshCw } from 'react-icons/fi';
 import DataTable from '../../core/Tabla/components/DataTable.jsx';
 import Modal from '../../core/Modal/components/Modal.jsx';
 import useUsuarios from '../hooks/useUsuarios.jsx';
@@ -20,7 +20,7 @@ const Usuarios = () => {
         usuarios, archivados, roles, loading, modalOpen, editing,
         search, setSearch, formData, setFormData, erroresCampos,
         mostrarArchivados, setMostrarArchivados, cargarArchivados,
-        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar, purgar,
+        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar, purgar, restaurar,
     } = useUsuarios();
 
     const update = (campo, val) => setFormData(f => ({ ...f, [campo]: val }));
@@ -127,6 +127,14 @@ const Usuarios = () => {
                         emptyMessage="No hay usuarios archivados"
                         renderActions={(row) => (
                             <div className="table-actions">
+                                <button
+                                    className="action-btn"
+                                    onClick={() => restaurar(row)}
+                                    title="Restaurar usuario"
+                                    style={{ color: '#22c55e' }}
+                                >
+                                    <FiRefreshCw size={14} />
+                                </button>
                                 <button
                                     className="action-btn delete"
                                     onClick={() => purgar(row)}
