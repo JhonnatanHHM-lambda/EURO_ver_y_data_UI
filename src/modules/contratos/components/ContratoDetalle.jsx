@@ -207,11 +207,13 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
     const _enUmbral = _diasRestantes !== null && contrato?.dias_alerta_director != null
         && _diasRestantes <= contrato.dias_alerta_director;
 
-    // Director decide: flujo normal (PENDIENTE_DECISION_DIRECTOR) o dentro del umbral sin firma del empleado
-    const puedeDecidir = esDir &&
-        (contrato?.estado === 'PENDIENTE_DECISION_DIRECTOR' ||
-         (contrato?.estado === 'PENDIENTE_FIRMA_NO_PRORROGA' && _enUmbral)) &&
-        contrato?.tipo_carta === 'NO_PRORROGA';
+    // GH decide (nuevo flujo): PENDIENTE_DECISION_GH o dentro del umbral sin firma (fallback si el task no corrió)
+    // Director decide (flujo legado): contratos que quedaron en PENDIENTE_DECISION_DIRECTOR
+    const puedeDecidir = (
+        (esGH && (contrato?.estado === 'PENDIENTE_DECISION_GH' ||
+                  (contrato?.estado === 'PENDIENTE_FIRMA_NO_PRORROGA' && _enUmbral))) ||
+        (esDir && contrato?.estado === 'PENDIENTE_DECISION_DIRECTOR')
+    ) && contrato?.tipo_carta === 'NO_PRORROGA';
     // GH define condiciones: estado PENDIENTE_CONDICIONES_GH
     const puedeCondGH = esGH && contrato?.estado === 'PENDIENTE_CONDICIONES_GH';
     // Notificar al empleado: TERMINACION → director, PRORROGA → GH
@@ -252,7 +254,7 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
                             <EstadoBadge estado={
                                 (contrato.estado === 'PENDIENTE_FIRMA_NO_PRORROGA' && _enUmbral)
-                                    ? 'PENDIENTE_DECISION_DIRECTOR'
+                                    ? 'PENDIENTE_DECISION_GH'
                                     : contrato.estado
                             } />
                             <span className="ctr-tipo-pill">{TIPO_CARTA_LABEL[contrato.tipo_carta] || contrato.tipo_carta}</span>
