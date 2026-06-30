@@ -51,7 +51,7 @@ const Contratos = () => {
 
     const _user            = JSON.parse(localStorage.getItem('user') || '{}');
     const permisos         = _user.permisos_rol || [];
-    const esSU             = _user.is_superuser;
+    const esSU             = _user.is_superuser || permisos.includes('can_manage_users');
     const puedeEscanear    = esSU || permisos.includes('can_escanear_siesa');
     const puedeAsignaciones = esSU || permisos.includes('can_manage_asignaciones');
 

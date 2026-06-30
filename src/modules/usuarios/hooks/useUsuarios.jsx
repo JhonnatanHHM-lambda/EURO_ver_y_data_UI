@@ -4,11 +4,13 @@ import api from '../../../services/api';
 
 const useUsuarios = () => {
     const [usuarios, setUsuarios] = useState([]);
+    const [archivados, setArchivados] = useState([]);
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [search, setSearch] = useState('');
+    const [mostrarArchivados, setMostrarArchivados] = useState(false);
     const [formData, setFormData] = useState({
         cedula: '', correo: '', nombres: '', apellidos: '',
         telefono: '', genero: '', password: '', grupos: [],
@@ -29,6 +31,15 @@ const useUsuarios = () => {
             swal({ title: 'Error', text: msg, icon: 'error' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const cargarArchivados = async () => {
+        try {
+            const res = await api.get('usuarios/?include_inactivos=true');
+            setArchivados(res.data);
+        } catch {
+            swal({ title: 'Error', text: 'No se pudieron cargar los usuarios archivados.', icon: 'error' });
         }
     };
 
@@ -241,7 +252,7 @@ const useUsuarios = () => {
     const eliminar = async (usuario) => {
         const result = await swal({
             title: `¿Eliminar permanentemente a "${usuario.nombre_completo}"?`,
-            html: '<p style="font-size:13px;color:var(--fg3)">Esta acción <strong style="color:#ef4444">no se puede deshacer</strong>. Todos los datos del usuario serán eliminados del sistema.</p>',
+            html: '<p style="font-size:13px;color:var(--fg3)">Esta acción <strong style="color:#ef4444">no se puede deshacer</strong>. Si el usuario no tiene datos críticos asociados, será eliminado por completo del sistema.</p>',
             icon: 'warning', showCancelButton: true,
             confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
             confirmButtonColor: '#ef4444'
@@ -249,17 +260,58 @@ const useUsuarios = () => {
         if (!result.isConfirmed) return;
         try {
             await api.delete(`usuarios/${usuario.id}/`);
-            swal({ title: 'Eliminado', icon: 'success', timer: 1800, showConfirmButton: false });
+            swal({ title: 'Eliminado', text: 'El usuario fue eliminado permanentemente.', icon: 'success', timer: 1800, showConfirmButton: false });
             cargar();
-        } catch {
-            swal({ title: 'Error', text: 'No se pudo eliminar el usuario.', icon: 'error' });
+        } catch (err) {
+            const data = err.response?.data;
+            if (err.response?.status === 409 && data?.solo_desactivar) {
+                const conf = await swal({
+                    title: 'No se puede eliminar',
+                    text: data.error,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Desactivar en su lugar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#f59e0b',
+                });
+                if (conf.isConfirmed) {
+                    try {
+                        await api.patch(`usuarios/${usuario.id}/`, { is_active: false });
+                        swal({ title: 'Desactivado', text: 'El usuario fue desactivado. Sus datos se conservan para trazabilidad.', icon: 'success', timer: 2500, showConfirmButton: false });
+                        cargar();
+                    } catch {
+                        swal({ title: 'Error', text: 'No se pudo desactivar el usuario.', icon: 'error' });
+                    }
+                }
+            } else {
+                swal({ title: 'Error', text: data?.error || 'No se pudo eliminar el usuario.', icon: 'error' });
+            }
+        }
+    };
+
+    const purgar = async (usuario) => {
+        const result = await swal({
+            title: `¿Purgar a "${usuario.nombre_completo}"?`,
+            html: '<p style="font-size:13px;color:var(--fg3)">Este usuario ya estaba archivado. Purgarlo lo <strong style="color:#ef4444">borra definitivamente</strong> de la base de datos y libera su correo y cédula.</p>',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: 'Sí, purgar', cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ef4444'
+        });
+        if (!result.isConfirmed) return;
+        try {
+            await api.delete(`usuarios/${usuario.id}/`);
+            swal({ title: 'Purgado', text: 'El usuario fue eliminado definitivamente.', icon: 'success', timer: 1800, showConfirmButton: false });
+            cargarArchivados();
+        } catch (err) {
+            swal({ title: 'Error', text: err.response?.data?.error || 'No se pudo purgar el usuario.', icon: 'error' });
         }
     };
 
     return {
-        usuarios: usuariosFiltrados, roles, loading, modalOpen, editing,
+        usuarios: usuariosFiltrados, archivados, roles, loading, modalOpen, editing,
         search, setSearch, formData, setFormData, erroresCampos,
-        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar,
+        mostrarArchivados, setMostrarArchivados, cargarArchivados,
+        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar, purgar,
     };
 };
 

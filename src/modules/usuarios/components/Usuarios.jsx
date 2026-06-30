@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser, FiAlertCircle, FiShield, FiEye, FiEyeOff, FiUserX } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser, FiAlertCircle, FiShield, FiEye, FiEyeOff, FiUserX, FiArchive } from 'react-icons/fi';
 import DataTable from '../../core/Tabla/components/DataTable.jsx';
 import Modal from '../../core/Modal/components/Modal.jsx';
 import useUsuarios from '../hooks/useUsuarios.jsx';
@@ -17,9 +17,10 @@ const Campo = ({ label, error, children, hint }) => (
 const Usuarios = () => {
     const [verPassword, setVerPassword] = useState(false);
     const {
-        usuarios, roles, loading, modalOpen, editing,
+        usuarios, archivados, roles, loading, modalOpen, editing,
         search, setSearch, formData, setFormData, erroresCampos,
-        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar,
+        mostrarArchivados, setMostrarArchivados, cargarArchivados,
+        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar, purgar,
     } = useUsuarios();
 
     const update = (campo, val) => setFormData(f => ({ ...f, [campo]: val }));
@@ -76,6 +77,19 @@ const Usuarios = () => {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+                    <button
+                        className={`vyd-btn-sm ghost${mostrarArchivados ? ' active' : ''}`}
+                        style={{ color: mostrarArchivados ? '#ef4444' : 'var(--fg3)', borderColor: mostrarArchivados ? '#ef4444' : undefined, gap: 6 }}
+                        onClick={() => {
+                            const next = !mostrarArchivados;
+                            setMostrarArchivados(next);
+                            if (next) cargarArchivados();
+                        }}
+                        title="Ver usuarios archivados (eliminados con soft-delete)"
+                    >
+                        <FiArchive size={13} />
+                        {mostrarArchivados ? 'Ocultar archivados' : 'Ver archivados'}
+                    </button>
                 </div>
             </div>
 
@@ -99,6 +113,33 @@ const Usuarios = () => {
                     )}
                 />
             </div>
+
+            {/* Panel de archivados (soft-deleted) */}
+            {mostrarArchivados && (
+                <div className="vyd-panel" style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(239,68,68,.3)' }}>
+                    <div style={{ padding: '10px 16px', background: 'rgba(239,68,68,.06)', borderBottom: '1px solid rgba(239,68,68,.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <FiArchive size={13} style={{ color: '#ef4444' }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#ef4444' }}>Usuarios archivados</span>
+                        <span style={{ fontSize: 11, color: 'var(--fg4)', marginLeft: 4 }}>({archivados.length}) — Eliminados con soft-delete. Purgalos para liberar su correo y cédula.</span>
+                    </div>
+                    <DataTable
+                        data={archivados} columns={columns} loading={false}
+                        emptyMessage="No hay usuarios archivados"
+                        renderActions={(row) => (
+                            <div className="table-actions">
+                                <button
+                                    className="action-btn delete"
+                                    onClick={() => purgar(row)}
+                                    title="Purgar: eliminar permanentemente de la BD"
+                                    style={{ color: '#ef4444' }}
+                                >
+                                    <FiTrash2 size={14} />
+                                </button>
+                            </div>
+                        )}
+                    />
+                </div>
+            )}
 
             {/* Modal crear/editar */}
             <Modal isOpen={modalOpen} onClose={cerrarModal} title={editing ? 'Editar usuario' : 'Nuevo usuario'}>
