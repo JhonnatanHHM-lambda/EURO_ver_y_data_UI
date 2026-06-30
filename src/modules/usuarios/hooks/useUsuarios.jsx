@@ -289,6 +289,25 @@ const useUsuarios = () => {
         }
     };
 
+    const restaurar = async (usuario) => {
+        const result = await swal({
+            title: `¿Restaurar a "${usuario.nombre_completo}"?`,
+            text: 'El usuario volverá a estar activo y podrá iniciar sesión nuevamente.',
+            icon: 'question', showCancelButton: true,
+            confirmButtonText: 'Sí, restaurar', cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#22c55e',
+        });
+        if (!result.isConfirmed) return;
+        try {
+            await api.patch(`usuarios/${usuario.id}/`, { estado: true, is_active: true });
+            swal({ title: 'Restaurado', text: 'El usuario está activo nuevamente.', icon: 'success', timer: 1800, showConfirmButton: false });
+            cargarArchivados();
+            cargar();
+        } catch (err) {
+            swal({ title: 'Error', text: err.response?.data?.error || 'No se pudo restaurar el usuario.', icon: 'error' });
+        }
+    };
+
     const purgar = async (usuario) => {
         const result = await swal({
             title: `¿Purgar a "${usuario.nombre_completo}"?`,
@@ -311,7 +330,7 @@ const useUsuarios = () => {
         usuarios: usuariosFiltrados, archivados, roles, loading, modalOpen, editing,
         search, setSearch, formData, setFormData, erroresCampos,
         mostrarArchivados, setMostrarArchivados, cargarArchivados,
-        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar, purgar,
+        abrirModalCrear, abrirModalEditar, cerrarModal, handleSubmit, desactivar, eliminar, purgar, restaurar,
     };
 };
 
