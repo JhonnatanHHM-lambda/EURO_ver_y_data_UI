@@ -7,6 +7,7 @@ const PAGE_SIZE = 20;
 export const ESTADOS = [
     'PENDIENTE_FIRMA_NO_PRORROGA',
     'PENDIENTE_DECISION_DIRECTOR',
+    'PENDIENTE_DECISION_GH',
     'PENDIENTE_CONDICIONES_GH',
     'PENDIENTE_NOTIFICACION_EMPLEADO',
     'PENDIENTE_FIRMA_PRORROGA',
@@ -19,6 +20,7 @@ export const ESTADOS = [
 export const ESTADOS_LABEL = {
     PENDIENTE_FIRMA_NO_PRORROGA:      'Pendiente firma',
     PENDIENTE_DECISION_DIRECTOR:      'Pendiente director',
+    PENDIENTE_DECISION_GH:            'Pendiente decisión GH',
     PENDIENTE_CONDICIONES_GH:         'Pendiente GH',
     PENDIENTE_NOTIFICACION_EMPLEADO:  'Listo para notificar',
     PENDIENTE_FIRMA_PRORROGA:         'Pend. firma prórroga',
@@ -31,7 +33,8 @@ export const ESTADOS_LABEL = {
 export const ESTADO_COLORS = {
     PENDIENTE_FIRMA_NO_PRORROGA:      { bg: 'rgba(245,158,11,.12)',  color: '#b45309', dot: '#f59e0b' },
     PENDIENTE_DECISION_DIRECTOR:      { bg: 'rgba(99,102,241,.12)',  color: '#4338ca', dot: '#6366f1' },
-    PENDIENTE_CONDICIONES_GH:         { bg: 'rgba(14,165,233,.12)',  color: '#0369a1', dot: '#0ea5e9' },
+    PENDIENTE_DECISION_GH:            { bg: 'rgba(14,165,233,.12)',  color: '#0369a1', dot: '#0ea5e9' },
+    PENDIENTE_CONDICIONES_GH:         { bg: 'rgba(59,130,246,.12)',  color: '#1d4ed8', dot: '#3b82f6' },
     PENDIENTE_NOTIFICACION_EMPLEADO:  { bg: 'rgba(168,85,247,.12)',  color: '#7e22ce', dot: '#a855f7' },
     PENDIENTE_FIRMA_PRORROGA:         { bg: 'rgba(139,92,246,.12)',  color: '#7c3aed', dot: '#8b5cf6' },
     PENDIENTE_FIRMA_TERMINACION:      { bg: 'rgba(239,68,68,.12)',   color: '#b91c1c', dot: '#ef4444' },

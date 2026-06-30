@@ -413,7 +413,7 @@ const Contratos = () => {
                                 // Dentro del umbral de alerta o ya expirado → el director debe decidir
                                 const enUmbral = dias !== null && c.dias_alerta_director != null && dias <= c.dias_alerta_director;
                                 const estadoDisplay = (c.estado === 'PENDIENTE_FIRMA_NO_PRORROGA' && enUmbral)
-                                    ? 'PENDIENTE_DECISION_DIRECTOR'
+                                    ? 'PENDIENTE_DECISION_GH'
                                     : c.estado;
                                 return (
                                     <tr key={c.id} style={{ cursor: 'pointer' }} onClick={() => setContratoId(c.id)}>
