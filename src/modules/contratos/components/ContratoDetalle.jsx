@@ -105,26 +105,34 @@ const ContratoDetalle = ({ contratoId, onClose, onProrrogar, onTerminar, onCondi
     const esDir         = esSU || permisos.includes('can_decide_contratos');
     const puedeReenviar = esSU || permisos.includes('can_view_contratos');
 
-    useEffect(() => {
-        const cargar = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get(`contratos/${contratoId}/`);
-                setContrato(res.data);
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        cargar();
-    }, [contratoId]);
+    const cargarContrato = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get(`contratos/${contratoId}/`);
+            setContrato(res.data);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { cargarContrato(); }, [contratoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleDecision = async (tipo) => {
         let ok = false;
         if (tipo === 'prorrogar') ok = await onProrrogar(contratoId);
         else ok = await onTerminar(contratoId);
-        if (ok) { setModalDecision(false); onActualizado(); }
+        if (ok) {
+            setModalDecision(false);
+            if (esGH) {
+                // GH tomó la decisión: recargar contrato y abrir condiciones directamente
+                await cargarContrato();
+                setModalCondGH(true);
+            } else {
+                onActualizado();
+            }
+        }
     };
 
     const handleCondicionesGH = async (datos) => {
