@@ -32,8 +32,8 @@ const grupos = [
         label: 'Gestión Documental',
         icon: <FiFolder size={15} />,
         items: [
-            { key: 'optimizaciones', label: 'Optimizaciones', icon: <FiZap size={16} />,  path: '/app/optimizaciones', permiso: null, badge: 'Próximo' },
-            { key: 'cajas',          label: 'Cajas',          icon: <FiBox size={16} />,  path: '/app/cajas',          permiso: null, badge: 'Próximo' },
+            { key: 'optimizacion-correos', label: 'Optimización Correos', icon: <FiMail size={16} />, path: '/app/optimizacion-correos', permiso: 'can_view_optimizacion_correos' },
+            { key: 'cajas',                label: 'Cajas',                icon: <FiBox size={16} />,  path: '/app/cajas',                permiso: null, badge: 'Próximo' },
         ],
     },
     {
