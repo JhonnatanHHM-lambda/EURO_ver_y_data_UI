@@ -17,7 +17,7 @@ const grupos = [
         label: 'Gestión Humana',
         icon: <FiBriefcase size={15} />,
         items: [
-            { key: 'dashboard',    label: 'Dashboard',      icon: <FiHome size={16} />,       path: '/app/dashboard',       permiso: null,                    badge: 'Próximo' },
+            { key: 'dashboard',    label: 'Dashboard',      icon: <FiHome size={16} />,       path: '/app/dashboard',       permiso: null },
             { key: 'vencimientos',    label: 'Vencimientos',   icon: <FiFileText size={16} />,   path: '/app/contratos',         permiso: 'can_view_contratos' },
             { key: 'contrataciones',  label: 'Contrataciones', icon: <FiBriefcase size={16} />,  path: '/app/contrataciones',    permiso: 'can_view_contrataciones' },
             { key: 'firma-gh',        label: 'Firma GH',       icon: <FiPenTool size={16} />,    path: '/app/firma-gh',          permiso: 'can_manage_firma_gh' },
