@@ -1,5 +1,7 @@
 @use '../../../styles/variables' as *;
 
+// ─── KPI grid (reutilizable en todo el módulo) ───────────────────────────────
+
 .vyd-kpis {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
   @media (max-width: $bp-lg) { grid-template-columns: repeat(2, 1fr); }
@@ -24,9 +26,9 @@
 }
 
 .vyd-kpi-num {
-  font-size: 28px; font-weight: 900; color: var(--fg1);
+  font-size: 22px; font-weight: 900; color: var(--fg1);
   letter-spacing: -.03em; font-variant-numeric: tabular-nums;
-  transition: color .25s;
+  transition: color .25s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   .vyd-kpi.ok &     { color: #16a34a; }
   .vyd-kpi.mute &   { color: var(--fg3); }
   .vyd-kpi.danger & { color: #dc2626; }
@@ -45,7 +47,7 @@
   transition: color .25s;
 }
 
-// Banner de sede obligatoria
+// Banner de sede
 .vyd-gate {
   display: flex; align-items: center; gap: 16px;
   padding: 18px 22px; border-radius: $radius-lg;
@@ -53,8 +55,8 @@
   border: 1px solid rgba(255,227,2,.30); border-left: 3px solid #FFE302;
   flex-wrap: wrap;
 }
-.vyd-gate-icon { font-size: 22px; flex-shrink: 0; }
-.vyd-gate-body { flex: 1; min-width: 200px; }
+.vyd-gate-icon  { font-size: 22px; flex-shrink: 0; }
+.vyd-gate-body  { flex: 1; min-width: 200px; }
 .vyd-gate-title { font-size: 13.5px; font-weight: 700; color: var(--fg1); transition: color .25s; }
 .vyd-gate-text  { font-size: 12px; color: var(--fg2); margin-top: 3px; transition: color .25s; }
 
@@ -65,10 +67,9 @@
   outline: none; appearance: none; cursor: pointer;
   transition: border-color .2s, background .25s, color .25s;
   &:focus { border-color: var(--accent); }
-  option { background: var(--bg-modal); color: var(--fg1); }
+  option  { background: var(--bg-modal); color: var(--fg1); }
 }
 
-// Coming soon placeholder
 .vyd-coming-soon {
   text-align: center; padding: 48px 20px;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -76,3 +77,470 @@
 .vyd-coming-icon { font-size: 36px; }
 .vyd-coming-text { font-size: 14px; color: var(--fg2); max-width: 400px; line-height: 1.6; transition: color .25s; }
 .vyd-coming-meta { font-size: 11.5px; color: var(--fg4); transition: color .25s; }
+
+// ─── Dashboard Nómina (dnm-*) ─────────────────────────────────────────────────
+
+.dnm-tabs {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: $radius-lg; width: fit-content;
+  flex-wrap: wrap;
+}
+
+.dnm-tab {
+  padding: 8px 20px; border-radius: $radius-md;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: transparent; border: none; color: var(--fg3);
+  transition: background .2s, color .2s;
+
+  &:hover  { background: var(--hover); color: var(--fg1); }
+  &.active { background: var(--accent); color: #fff; }
+}
+
+.dnm-tab-content { margin-top: 0; }
+
+.dnm-tab-body {
+  display: flex; flex-direction: column; gap: 20px;
+  min-width: 0;   // necesario para que overflow-x:auto de los hijos funcione
+}
+
+// Filtros
+.dnm-filters {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: $radius-lg;
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column; align-items: stretch;
+    > .dnm-select, > .dnm-clear-btn { width: 100%; }
+  }
+}
+
+.dnm-select {
+  padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border2);
+  border-radius: $radius-md; color: var(--fg1); font-size: 12.5px;
+  outline: none; cursor: pointer; min-width: 150px;
+  transition: border-color .2s, background .25s;
+  &:focus { border-color: var(--accent); }
+  option  { background: var(--bg-modal); }
+
+  @media (max-width: $bp-md) { min-width: 120px; }
+}
+
+.dnm-clear-btn {
+  padding: 8px 14px; background: transparent; border: 1px solid var(--border2);
+  border-radius: $radius-md; color: var(--fg3); font-size: 12px; cursor: pointer;
+  transition: all .2s;
+  &:hover { border-color: var(--danger); color: var(--danger); }
+}
+
+// Loading
+.dnm-loading {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--fg3); font-size: 13px; padding: 40px 0; justify-content: center;
+}
+
+.dnm-spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: dnm-spin .7s linear infinite;
+}
+
+@keyframes dnm-spin { to { transform: rotate(360deg); } }
+
+// Layout principal ausentismo: KPIs izq + Gauge der
+.dnm-aus-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+  @media (max-width: $bp-lg) { grid-template-columns: 1fr; }
+}
+
+.dnm-aus-kpis {
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+// En el layout side-by-side, los grids de KPI usan 2 cols (espacio reducido)
+.dnm-aus-layout .dnm-kpis-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+// KPIs especial para ausentismo (8 en 4+4) — fuera del layout: 4 cols
+.dnm-kpis-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  @media (max-width: $bp-lg) { grid-template-columns: repeat(2, 1fr); }
+}
+
+// Panel gauge
+.dnm-gauge-panel {
+  display: flex; flex-direction: column; align-items: center;
+}
+
+.dnm-gauge-wrap {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+
+.dnm-gauge-formula {
+  font-size: 12.5px; color: var(--fg3); text-align: center; line-height: 1.8;
+  margin-top: 2px;
+}
+
+.dnm-gauge-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; margin-top: 4px;
+}
+
+.dnm-gauge-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; color: var(--fg3);
+  padding: 3px 9px; border-radius: 999px;
+  border: 1px solid transparent; transition: all .2s;
+
+  &.active {
+    color: var(--chip-color);
+    background: color-mix(in srgb, var(--chip-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--chip-color) 30%, transparent);
+  }
+}
+
+.dnm-gauge-chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--chip-color); flex-shrink: 0;
+}
+
+
+// Gráficos
+.dnm-chart-wrap {
+  padding: 8px 0;
+  overflow-x: auto;
+
+  .recharts-cartesian-axis-tick-value { transition: fill .25s; }
+}
+
+.dnm-chart-tooltip {
+  background: var(--bg-modal); border: 1px solid var(--border);
+  border-radius: $radius-md; padding: 10px 14px;
+  font-size: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  color: var(--fg1);
+
+  p { margin: 3px 0; }
+}
+
+.dnm-chart-tooltip-label {
+  font-weight: 700; color: var(--fg1); margin-bottom: 4px !important;
+  border-bottom: 1px solid var(--border); padding-bottom: 4px;
+}
+
+// Dos columnas para tablas
+.dnm-two-col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  @media (max-width: $bp-lg) { grid-template-columns: 1fr; }
+}
+
+// Tablas
+.dnm-table-wrap {
+  overflow-x: auto; overflow-y: auto; max-height: 340px;
+  border-radius: 0 0 $radius-md $radius-md;
+  position: relative;
+
+  // Fila Total siempre visible — sticky al fondo del scroll
+  // --bg-modal es el único color sólido y opaco del tema (dark: #1a1a2e, light: #F7F5EF)
+  table tfoot tr td,
+  table tfoot tr th {
+    position: sticky; bottom: 0; z-index: 2;
+    background: var(--bg-modal);
+    border-top: 2px solid var(--border2, rgba(255,255,255,.18));
+    font-weight: 600; color: var(--fg1);
+    box-shadow: 0 -2px 8px rgba(0,0,0,.3);
+  }
+
+  // Hover/selected sobre filas NO debe sobreescribir el fondo sólido del tfoot sticky
+  // Especificidad (0,3,3) > hover (0,2,2)
+  .dnm-table tfoot tr:hover td,
+  .dnm-table tfoot tr:hover th,
+  .dnm-table tfoot tr.dnm-row-selected td,
+  .dnm-table tfoot tr.dnm-row-selected th {
+    background: var(--bg-modal);
+  }
+}
+
+.dnm-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+
+  th {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--bg-modal); color: var(--fg3);
+    padding: 8px 12px; text-align: left; font-weight: 700;
+    font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+
+  td {
+    padding: 7px 12px; color: var(--fg2); border-bottom: 1px solid var(--border);
+    max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    transition: color .25s;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td {
+    background: var(--hover); color: var(--fg1);
+  }
+}
+
+// Badge de porcentaje coloreado
+.dnm-pct-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 700;
+}
+
+// Badge promedio antigüedad
+.dnm-avg-badge {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: $radius-md;
+  padding: 10px 16px; font-size: 13px; color: var(--fg2);
+  transition: background .25s, color .25s;
+
+  strong { color: var(--fg1); }
+}
+
+// ─── Layout específico tab Antigüedad ──────────────────────────────────────────
+
+.dnm-kpis-ant {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  @media (max-width: $bp-lg) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: $bp-sm) { grid-template-columns: 1fr 1fr; }
+}
+
+.dnm-ant-kpi2 {
+  display: flex; gap: 14px; align-items: stretch;
+  @media (max-width: $bp-sm) { flex-direction: column; }
+}
+
+// Grid barras + donuts: barra izquierda alta, donuts apilados a la derecha
+// Proporciones: ~55% barra / ~45% donuts
+// align-items:stretch → la barra se estira hasta igualar la altura de los donuts
+.dnm-ant-charts {
+  display: grid;
+  grid-template-columns: 11fr 9fr;
+  gap: 16px;
+  align-items: stretch;
+
+  @media (max-width: $bp-lg) {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  @media (max-width: $bp-md) {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}
+
+// Panel de barras: flex-column → el area de la gráfica ocupa el espacio restante
+// SIN overflow interno — en tablets táctiles el overflow:auto atrapa los gestos
+// y bloquea el scroll de página
+.dnm-bar-panel {
+  display: flex; flex-direction: column;
+
+  .dnm-bar-fill {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.dnm-ant-donuts {
+  display: flex; flex-direction: column; gap: 16px;
+  > .vyd-panel { flex: 1; }
+
+  @media (max-width: $bp-lg) {
+    > .vyd-panel { flex: none; }  // en tablet cada donut tiene su altura natural
+  }
+  @media (max-width: $bp-md) {
+    flex-direction: row; flex-wrap: wrap;
+    > .vyd-panel { flex: 1; min-width: 220px; }
+  }
+}
+
+// Bar chart con scroll interno
+.dnm-bar-scroll {
+  overflow-y: auto; overflow-x: hidden;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+}
+
+// Donuts en fila — layout alternativo (ya no se usa, se mantiene por compatibilidad)
+.dnm-donuts-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  @media (max-width: $bp-sm) { grid-template-columns: 1fr; }
+}
+
+// Overlay de paginación — suave
+.dnm-page-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.28);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2; border-radius: 4px;
+  opacity: 0; transition: opacity .2s;
+  pointer-events: none;
+  &.visible { opacity: 1; pointer-events: all; }
+}
+
+// Fila de tabla seleccionada
+.dnm-table tr.dnm-row-selected td {
+  background: rgba(99,102,241,.10); color: var(--fg1);
+}
+
+.dnm-table tr.dnm-row-clickable {
+  cursor: pointer;
+  &:hover td { background: var(--hover); color: var(--fg1); }
+}
+
+// dnm-row-total: mantenido por compatibilidad pero el sticky lo maneja tfoot
+
+// Filas de direcciones/centros (OMNICANAL, CEDI, DESPOSTAR, ADMINISTRACIÓN)
+.dnm-table tr.dnm-row-direc td {
+  color: var(--fg3);
+  font-style: italic;
+  opacity: 0.8;
+}
+
+// Panel de comparación mensual — tabla matricial ancha
+.dnm-comp-wrap { max-height: 480px; overflow: auto; position: relative; }
+
+.dnm-table-comp {
+  th.dnm-comp-tienda-th {
+    position: sticky; left: 0; z-index: 3;
+    background: var(--bg-modal);
+    min-width: 180px;
+    border-right: 1px solid var(--border2, rgba(255,255,255,.12));
+    vertical-align: middle;
+    box-shadow: 2px 0 6px rgba(0,0,0,.25);
+  }
+  td.dnm-comp-tienda-td {
+    position: sticky; left: 0; z-index: 1;
+    background: var(--bg-modal);
+    min-width: 180px;
+    border-right: 1px solid var(--border2, rgba(255,255,255,.12));
+    white-space: nowrap;
+    box-shadow: 2px 0 6px rgba(0,0,0,.20);
+  }
+  // Intersección: celda tienda en tfoot — sticky izq + sticky abajo
+  tfoot tr td.dnm-comp-tienda-td {
+    z-index: 4;
+    bottom: 0;
+    box-shadow: 2px -2px 8px rgba(0,0,0,.30);
+  }
+
+  // Hover/selected NO deben sobreescribir el fondo sólido de la columna Tienda sticky
+  // Especificidad (0,3,2) > hover (0,2,2)
+  tr:hover td.dnm-comp-tienda-td,
+  tr.dnm-row-selected td.dnm-comp-tienda-td {
+    background: var(--bg-modal);
+  }
+  th.dnm-comp-mes-th {
+    text-align: center;
+    border-left: 1px solid var(--border2, rgba(255,255,255,.12));
+    padding: 6px 4px;
+    white-space: nowrap;
+    background: rgba(99,102,241,.08);
+  }
+  th.dnm-comp-sub-th {
+    font-size: 10px; font-weight: 500;
+    white-space: nowrap; padding: 4px 6px;
+    color: var(--fg3);
+    border-left: 1px solid var(--border2, rgba(255,255,255,.06));
+    min-width: 90px;
+  }
+  td {
+    white-space: nowrap;
+    border-left: 1px solid var(--border2, rgba(255,255,255,.04));
+    padding: 5px 8px;
+  }
+}
+
+// Banner empleado seleccionado
+.dnm-emp-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(99,102,241,.10), rgba(99,102,241,.03));
+  border: 1px solid rgba(99,102,241,.28); border-left: 3px solid var(--accent);
+  border-radius: $radius-md; font-size: 13px; color: var(--fg2);
+  transition: background .25s;
+
+  strong { color: var(--fg1); }
+}
+
+.dnm-emp-banner-close {
+  margin-left: auto; background: transparent; border: none; cursor: pointer;
+  color: var(--fg3); font-size: 18px; line-height: 1; padding: 2px 6px;
+  border-radius: $radius-sm; transition: color .2s;
+  &:hover { color: #ef4444; }
+}
+
+// Contador de registros en cabecera de tabla
+.dnm-table-count {
+  font-size: 11px; font-weight: 600; color: var(--fg3);
+  background: var(--bg-input); border: 1px solid var(--border2);
+  border-radius: 99px; padding: 2px 8px; margin-left: 8px;
+  vertical-align: middle;
+}
+
+// Paginación tabla antigüedad
+.dnm-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--fg3); gap: 12px; flex-wrap: wrap;
+}
+
+.dnm-page-info { color: var(--fg3); font-size: 12px; }
+
+.dnm-page-controls {
+  display: flex; gap: 4px; align-items: center;
+}
+
+.dnm-page-btn {
+  padding: 5px 10px; background: transparent; border: 1px solid var(--border2);
+  border-radius: $radius-sm; color: var(--fg3); font-size: 12px; cursor: pointer;
+  transition: all .2s; min-width: 32px;
+
+  &:hover:not(:disabled) { background: var(--hover); color: var(--fg1); border-color: var(--accent); }
+  &:disabled { opacity: .4; cursor: not-allowed; }
+  &.active   { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+}
+
+// ─── Barra de progreso animada (refetch suave, sin desmonte de contenido) ────────
+
+.dnm-progress-bar-anim {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: dnm-shimmer 1.4s linear infinite;
+  border-radius: 2px; z-index: 20;
+  pointer-events: none;
+}
+
+@keyframes dnm-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ─── Layout tab Nómina Venta ──────────────────────────────────────────────────
+
+// Fila intermedia: Tendencia (izq) + Novedades (der)
+.dnm-nom-mid-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start;
+  @media (max-width: $bp-lg) { grid-template-columns: 1fr; }
+}
+
+.dnm-nom-kpis-row2 {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  @media (max-width: $bp-sm)  { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 420px)   { grid-template-columns: 1fr; }
+}
+
+// Variante delta (variación mensual) con colores semánticos
+.dnm-delta-up   { color: #22c55e; font-weight: 700; }
+.dnm-delta-down { color: #ef4444; font-weight: 700; }
+.dnm-delta-nil  { color: var(--fg4); }

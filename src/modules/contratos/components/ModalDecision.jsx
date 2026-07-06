@@ -48,7 +48,7 @@ const ModalDecision = ({ contrato, onClose, onConfirmar }) => {
     };
 
     return (
-        <Modal isOpen onClose={onClose} title="Decisión del director" size="sm">
+        <Modal isOpen onClose={onClose} title="Decisión de Gest. Humana" size="sm">
             <p style={{ fontSize: 12, color: 'var(--fg3)', margin: '-8px 0 22px' }}>
                 {contrato.nombre_completo} · {contrato.tipo_documento} {contrato.documento_id}
             </p>

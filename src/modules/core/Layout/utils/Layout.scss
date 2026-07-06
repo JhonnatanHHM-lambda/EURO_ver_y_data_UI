@@ -7,16 +7,18 @@
   margin-left: $sidebar-width;
   transition: margin-left .25s cubic-bezier(.4,0,.2,1);
   min-height: 100vh; display: flex; flex-direction: column;
+  overflow-x: hidden;   // el sidebar es position:fixed → no se recorta
 }
 .vyd-shell.sb-collapsed .vyd-content-wrap { margin-left: $sidebar-collapsed; }
 
-.vyd-content { flex: 1; }
+.vyd-content { flex: 1; min-width: 0; }
 
 // ── Área principal ────────────────────────────────────────────────────────────
 .vyd-main {
   padding: 24px 28px 80px;
   display: flex; flex-direction: column; gap: 18px;
   width: 100%; max-width: 1400px;
+  min-width: 0;   // permite que el flex-item se achique por debajo del contenido
 }
 
 // ── Panel genérico ────────────────────────────────────────────────────────────
@@ -28,6 +30,7 @@
   border-radius: $radius-lg; padding: 20px 22px;
   box-shadow: var(--card-shadow), var(--card-inset);
   transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+  min-width: 0;
 }
 
 .vyd-panel-head {

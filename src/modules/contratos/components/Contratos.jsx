@@ -464,7 +464,7 @@ const Contratos = () => {
                         const dias = diasRestantes(c.fecha_finalizacion);
                         const enUmbral = dias !== null && c.dias_alerta_director != null && dias <= c.dias_alerta_director;
                         const estadoDisplay = (c.estado === 'PENDIENTE_FIRMA_NO_PRORROGA' && enUmbral)
-                            ? 'PENDIENTE_DECISION_DIRECTOR'
+                            ? 'PENDIENTE_DECISION_GH'
                             : c.estado;
                         return (
                             <div key={c.id} className="vyd-card-row" onClick={() => setContratoId(c.id)}>
