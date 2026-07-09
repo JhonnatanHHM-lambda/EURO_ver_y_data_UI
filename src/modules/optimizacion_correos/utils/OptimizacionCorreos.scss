@@ -198,6 +198,22 @@
     margin-bottom: 16px;
     font-size: 13px;
     color: #b91c1c;
+
+    &__diagnostico {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(185, 28, 28, 0.18);
+        color: #7f1d1d;
+
+        ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+    }
 }
 
 @keyframes spin {

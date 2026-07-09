@@ -19,6 +19,26 @@ const fmtFecha = (f) =>
         day: '2-digit', month: 'short', year: 'numeric',
     }) : '—';
 
+const diagnosticoError = (mensaje = '') => {
+    const normalizado = mensaje.toLowerCase();
+    if (
+        normalizado.includes('__requestverificationtoken') ||
+        normalizado.includes('js challenge') ||
+        normalizado.includes('waf') ||
+        normalizado.includes('companylogin')
+    ) {
+        return {
+            titulo: 'El portal DIAN no entregó la página esperada.',
+            pasos: [
+                'Reintenta la ejecución; el backend ahora reutiliza sesión DIAN viva y reintenta el warm-up.',
+                'Si persiste, ejecuta la traza con --headful --guardar-evidencias y revisa la captura del warm-up.',
+                'No edites otros módulos: este error viene del acceso RADIAN/DIAN, no de la conciliación ni del correo.',
+            ],
+        };
+    }
+    return null;
+};
+
 const EjecucionBadge = ({ estado }) => {
     const c = ESTADO_BADGE_EJECUCION[estado] || ESTADO_BADGE_EJECUCION.PENDIENTE;
     return (
@@ -68,6 +88,7 @@ const OptimizacionCorreos = () => {
     const ejecucionesHistorial = ejecuciones.filter(
         e => !ejecucionActual || e.id !== ejecucionActual.id
     );
+    const diagnosticoEjecucion = diagnosticoError(ejecucionActual?.error_mensaje || '');
 
     return (
         <div className="vyd-main fade-in">
@@ -118,6 +139,16 @@ const OptimizacionCorreos = () => {
             {ejecucionActual?.estado === 'ERROR' && ejecucionActual.error_mensaje && (
                 <div className="vyd-oc-error">
                     <strong>Error en la ejecución:</strong> {ejecucionActual.error_mensaje}
+                    {diagnosticoEjecucion && (
+                        <div className="vyd-oc-error__diagnostico">
+                            <strong>{diagnosticoEjecucion.titulo}</strong>
+                            <ul>
+                                {diagnosticoEjecucion.pasos.map(paso => (
+                                    <li key={paso}>{paso}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             )}
 
