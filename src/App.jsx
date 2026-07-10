@@ -18,6 +18,7 @@ import Contrataciones from './modules/contrataciones/components/Contrataciones.j
 import FirmaDigital from './modules/firma/components/FirmaDigital.jsx';
 import FirmaGH from './modules/firma-gh/components/FirmaGH.jsx';
 import OptimizacionCorreos from './modules/optimizacion_correos/components/OptimizacionCorreos.jsx';
+import MigracionMasivaArchivo from './modules/migracion_masiva_archivo/components/MigracionMasivaArchivo.jsx';
 
 function App() {
     return (
@@ -115,6 +116,12 @@ function App() {
                         <Route path="/app/optimizacion-correos" element={
                             <TienePermiso permiso="can_view_optimizacion_correos">
                                 <OptimizacionCorreos />
+                            </TienePermiso>
+                        } />
+
+                        <Route path="/app/migracion-masiva-archivo" element={
+                            <TienePermiso permiso="can_view_migracion_masiva_archivo">
+                                <MigracionMasivaArchivo />
                             </TienePermiso>
                         } />
                     </Route>

@@ -33,6 +33,7 @@ const grupos = [
         icon: <FiFolder size={15} />,
         items: [
             { key: 'optimizacion-correos', label: 'Optimización Correos', icon: <FiMail size={16} />, path: '/app/optimizacion-correos', permiso: 'can_view_optimizacion_correos' },
+            { key: 'migracion-masiva-archivo', label: 'Migración Masiva Archivo', icon: <FiUpload size={16} />, path: '/app/migracion-masiva-archivo', permiso: 'can_view_migracion_masiva_archivo' },
             { key: 'cajas',                label: 'Cajas',                icon: <FiBox size={16} />,  path: '/app/cajas',                permiso: null, badge: 'Próximo' },
         ],
     },
@@ -164,3 +165,4 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose }) => {
 };
 
 export default Sidebar;
+
