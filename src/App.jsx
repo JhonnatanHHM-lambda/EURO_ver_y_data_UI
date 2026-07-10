@@ -17,6 +17,7 @@ import Contratos from './modules/contratos/components/Contratos.jsx';
 import Contrataciones from './modules/contrataciones/components/Contrataciones.jsx';
 import FirmaDigital from './modules/firma/components/FirmaDigital.jsx';
 import FirmaGH from './modules/firma-gh/components/FirmaGH.jsx';
+import OptimizacionCorreos from './modules/optimizacion_correos/components/OptimizacionCorreos.jsx';
 
 function App() {
     return (
@@ -108,6 +109,12 @@ function App() {
                         <Route path="/app/firma-gh" element={
                             <TienePermiso permiso="can_manage_firma_gh">
                                 <FirmaGH />
+                            </TienePermiso>
+                        } />
+
+                        <Route path="/app/optimizacion-correos" element={
+                            <TienePermiso permiso="can_view_optimizacion_correos">
+                                <OptimizacionCorreos />
                             </TienePermiso>
                         } />
                     </Route>

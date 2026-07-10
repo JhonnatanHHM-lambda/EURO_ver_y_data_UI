@@ -3,12 +3,14 @@ import { FiTrendingUp } from 'react-icons/fi';
 import TabAusentismo from './tabs/TabAusentismo';
 import TabNominaVenta from './tabs/TabNominaVenta';
 import TabAntiguedad from './tabs/TabAntiguedad';
+import TabRotacion from './tabs/TabRotacion';
 import '../utils/Dashboard.scss';
 
 const TABS = [
     { id: 'ausentismo',   label: 'Ausentismo' },
     { id: 'nomina-venta', label: 'Nómina s/ Venta' },
     { id: 'antiguedad',   label: 'Antigüedad' },
+    { id: 'rotacion',     label: 'Rotación' },
 ];
 
 const Dashboard = () => {
@@ -37,6 +39,7 @@ const Dashboard = () => {
                 {active === 'ausentismo'   && <TabAusentismo />}
                 {active === 'nomina-venta' && <TabNominaVenta />}
                 {active === 'antiguedad'   && <TabAntiguedad />}
+                {active === 'rotacion'     && <TabRotacion />}
             </div>
         </div>
     );
