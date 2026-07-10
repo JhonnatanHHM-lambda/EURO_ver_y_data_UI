@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import Swal from 'sweetalert2';
 import api from '../../../../services/api';
+import MultiSelect from '../../../core/MultiSelect/components/MultiSelect';
 
 // ─── Helpers de formato ───────────────────────────────────────────────────────
 
@@ -44,7 +45,18 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 // ─── Constante ───────────────────────────────────────────────────────────────
 
-const INIT = { mes: '', anio: '', tienda: '' };
+const _hoyNV = new Date();
+const _MESES_NV = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+const isMesFuturoNV = (anio, mes) => {
+    if (!anio || !mes) return false;
+    const y = parseInt(anio);
+    if (isNaN(y)) return false;
+    const m = _MESES_NV.indexOf(mes.toUpperCase());
+    if (m === -1) return false;
+    return y > _hoyNV.getFullYear() || (y === _hoyNV.getFullYear() && m > _hoyNV.getMonth());
+};
+
+const INIT = { mes: _MESES_NV[_hoyNV.getMonth()], anio: String(_hoyNV.getFullYear()), tiendas: [] };
 
 // ─── Componente ──────────────────────────────────────────────────────────────
 
@@ -80,14 +92,19 @@ const TabNominaVenta = () => {
 
     useEffect(() => {
         const params = {};
-        if (filters.mes)    params.mes    = filters.mes;
-        if (filters.anio)   params.anio   = filters.anio;
-        if (filters.tienda) params.tienda = filters.tienda;
+        if (filters.mes)            params.mes    = filters.mes;
+        if (filters.anio)           params.anio   = filters.anio;
+        if (filters.tiendas.length) params.tiendas = filters.tiendas.join(',');
         fetchData(params);
     }, [filters, fetchData]);
 
     const handleTiendaClick = useCallback((name) => {
-        setFilters(f => ({ ...f, tienda: f.tienda === name ? '' : name }));
+        setFilters(f => ({
+            ...f,
+            tiendas: f.tiendas.includes(name)
+                ? f.tiendas.filter(t => t !== name)
+                : [...f.tiendas, name],
+        }));
     }, []);
 
     // ── Datos derivados ───────────────────────────────────────────────────────
@@ -120,7 +137,7 @@ const TabNominaVenta = () => {
         return { mesesComp: sortedMeses, tiendasComp: tiendaOrder, pivotComp: piv };
     }, [compMensual]);
 
-    const hasFilters = filters.mes || filters.anio || filters.tienda;
+    const hasFilters = filters.mes || filters.anio || filters.tiendas.length > 0;
 
     return (
         <div className="dnm-tab-body">
@@ -129,16 +146,25 @@ const TabNominaVenta = () => {
             <div className="dnm-filters">
                 <select value={filters.mes} onChange={e => setFilters(f => ({ ...f, mes: e.target.value }))} className="dnm-select">
                     <option value="">Todos los meses</option>
-                    {meses.map(m => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
+                    {meses.map(m => {
+                        const futuro = isMesFuturoNV(filters.anio, m);
+                        return (
+                            <option key={m} value={m} disabled={futuro}
+                                style={futuro ? { color: 'var(--fg3)' } : undefined}>
+                                {m.charAt(0) + m.slice(1).toLowerCase()}
+                            </option>
+                        );
+                    })}
                 </select>
                 <select value={filters.anio} onChange={e => setFilters(f => ({ ...f, anio: e.target.value }))} className="dnm-select">
-                    <option value="">Todos los años</option>
                     {anios.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
-                <select value={filters.tienda} onChange={e => setFilters(f => ({ ...f, tienda: e.target.value }))} className="dnm-select">
-                    <option value="">Todas las tiendas</option>
-                    {tiendas.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <MultiSelect
+                    value={filters.tiendas}
+                    onChange={sel => setFilters(f => ({ ...f, tiendas: sel }))}
+                    options={tiendas}
+                    placeholder="Todas las tiendas"
+                />
                 {hasFilters && (
                     <button className="dnm-clear-btn" onClick={() => setFilters(INIT)}>
                         Limpiar filtros
@@ -146,18 +172,18 @@ const TabNominaVenta = () => {
                 )}
             </div>
 
-            {/* ── Banner tienda seleccionada ───────────────────────────────── */}
-            {filters.tienda && (
+            {/* ── Banner sedes seleccionadas ───────────────────────────────── */}
+            {filters.tiendas.length > 0 && (
                 <div className="dnm-emp-banner" style={{
                     borderLeftColor: '#FFE302',
                     background: 'linear-gradient(135deg, rgba(255,227,2,.10), rgba(255,227,2,.03))',
                     borderColor: 'rgba(255,227,2,.28)',
                 }}>
-                    <span>🏬 Tienda seleccionada:</span>
-                    <strong>{filters.tienda}</strong>
+                    <span>🏬 {filters.tiendas.length === 1 ? 'Tienda seleccionada:' : 'Tiendas seleccionadas:'}</span>
+                    <strong>{filters.tiendas.join(' · ')}</strong>
                     <button className="dnm-emp-banner-close"
-                        onClick={() => setFilters(f => ({ ...f, tienda: '' }))}
-                        title="Quitar filtro de tienda">×</button>
+                        onClick={() => setFilters(f => ({ ...f, tiendas: [] }))}
+                        title="Quitar filtro de tiendas">×</button>
                 </div>
             )}
 
@@ -237,7 +263,7 @@ const TabNominaVenta = () => {
                                     <tbody>
                                         {tablaTiendas.filter(r => r.tienda !== '__TOTAL__').map((r, i) => {
                                             const isDirec  = ['ADMINISTRACIÓN','CEDI','DESPOSTAR','OMNICANAL'].includes(r.tienda);
-                                            const selected = filters.tienda === r.tienda;
+                                            const selected = filters.tiendas.includes(r.tienda);
                                             const rowCls = [
                                                 'dnm-row-clickable',
                                                 selected ? 'dnm-row-selected' : '',
@@ -325,7 +351,7 @@ const TabNominaVenta = () => {
                                         <tbody>
                                             {novedadesTda.filter(r => r.tienda !== '__TOTAL__').map((r, i) => {
                                                 const isDirec  = ['ADMINISTRACIÓN','CEDI','DESPOSTAR','OMNICANAL'].includes(r.tienda);
-                                                const selected = filters.tienda === r.tienda;
+                                                const selected = filters.tiendas.includes(r.tienda);
                                                 const rowCls = ['dnm-row-clickable', selected ? 'dnm-row-selected' : '', isDirec ? 'dnm-row-direc' : ''].filter(Boolean).join(' ');
                                                 return (
                                                     <tr key={i} className={rowCls}
@@ -384,7 +410,7 @@ const TabNominaVenta = () => {
                                     <tbody>
                                         {tiendasComp.filter(t => t !== '__TOTAL__').map((tienda, i) => {
                                             const isDirec  = ['ADMINISTRACIÓN','CEDI','DESPOSTAR','OMNICANAL'].includes(tienda);
-                                            const selected = filters.tienda === tienda;
+                                            const selected = filters.tiendas.includes(tienda);
                                             const rowCls = ['dnm-row-clickable', selected ? 'dnm-row-selected' : '', isDirec ? 'dnm-row-direc' : ''].filter(Boolean).join(' ');
                                             return (
                                                 <tr key={i} className={rowCls}

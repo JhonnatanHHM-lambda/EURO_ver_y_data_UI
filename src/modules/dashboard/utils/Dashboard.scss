@@ -104,7 +104,91 @@
   min-width: 0;   // necesario para que overflow-x:auto de los hijos funcione
 }
 
-// Filtros
+// ── Panel de filtros con botón de aplicar ────────────────────────────────────
+.dnm-filter-panel {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: $radius-lg;
+
+  @media (max-width: $bp-md) { flex-direction: column; }
+}
+
+.dnm-filter-controls {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 1;
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column; align-items: stretch;
+    > .dnm-select { width: 100%; }
+  }
+}
+
+.dnm-filter-actions {
+  display: flex; flex-direction: column; gap: 6px; min-width: 140px;
+  @media (max-width: $bp-md) { flex-direction: row; min-width: unset; }
+}
+
+// Botón principal "Aplicar filtros"
+.dnm-apply-btn {
+  padding: 8px 16px; border-radius: $radius-md; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+  background: var(--border2); border: 1px solid var(--border2); color: var(--fg3);
+  white-space: nowrap;
+
+  &:disabled { opacity: .55; cursor: not-allowed; }
+
+  // Estado con cambios pendientes
+  &--dirty {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+    box-shadow: 0 0 0 0 rgba(var(--accent-rgb, 99,102,241), .4);
+    animation: pulse-apply 1.8s ease-in-out infinite;
+    &:hover:not(:disabled) { filter: brightness(1.1); }
+  }
+}
+
+@keyframes pulse-apply {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(99,102,241,.0); }
+}
+
+.dnm-spinner-sm {
+  display: inline-block; width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+}
+
+.dnm-clear-btn {
+  padding: 8px 14px; background: transparent; border: 1px solid var(--border2);
+  border-radius: $radius-md; color: var(--fg3); font-size: 12px; cursor: pointer;
+  transition: all .2s; white-space: nowrap;
+  &:hover { border-color: var(--danger); color: var(--danger); }
+}
+
+// Badge del período activo
+.dnm-active-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: $radius-md; font-size: 12px;
+  background: rgba(var(--accent-rgb, 99,102,241), .07);
+  border: 1px solid rgba(var(--accent-rgb, 99,102,241), .18);
+  color: var(--fg2);
+
+  &-icon { font-size: 14px; line-height: 1; }
+  &-label { flex: 1;
+    strong { color: var(--fg1); }
+  }
+  &-hint {
+    font-size: 11px; color: var(--fg3); font-style: italic;
+    @media (max-width: $bp-sm) { display: none; }
+  }
+
+  // Estado pendiente de aplicar
+  &--pending {
+    background: rgba(234,179,8,.09);
+    border-color: rgba(234,179,8,.3);
+    color: var(--fg2);
+  }
+}
+
+// Filtros legacy (se mantiene por compatibilidad con otros tabs)
 .dnm-filters {
   display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
   padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
@@ -125,13 +209,6 @@
   option  { background: var(--bg-modal); }
 
   @media (max-width: $bp-md) { min-width: 120px; }
-}
-
-.dnm-clear-btn {
-  padding: 8px 14px; background: transparent; border: 1px solid var(--border2);
-  border-radius: $radius-md; color: var(--fg3); font-size: 12px; cursor: pointer;
-  transition: all .2s;
-  &:hover { border-color: var(--danger); color: var(--danger); }
 }
 
 // Loading
@@ -544,3 +621,80 @@
 .dnm-delta-up   { color: #22c55e; font-weight: 700; }
 .dnm-delta-down { color: #ef4444; font-weight: 700; }
 .dnm-delta-nil  { color: var(--fg4); }
+
+// ─── Tab Rotación ──────────────────────────────────────────────────────────────
+
+// Input de fecha hereda los mismos estilos que los select de filtros
+input[type="date"].dnm-select {
+  appearance: none;
+  color-scheme: dark light;
+  min-width: 140px;
+
+  &::-webkit-calendar-picker-indicator {
+    filter: opacity(0.6);
+    cursor: pointer;
+  }
+}
+
+// ─── MultiSelect (filtro de sedes con checkboxes) ─────────────────────────────
+
+.dnm-multiselect {
+  position: relative;
+
+  .dnm-multiselect-btn {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    width: 100%; cursor: pointer; text-align: left;
+    padding-right: 10px;
+
+    &.has-value { color: var(--accent); border-color: var(--accent); }
+    &.open      { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 99, 102, 241), .18); }
+  }
+
+  .dnm-multiselect-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dnm-multiselect-caret { font-size: 11px; color: var(--fg3); flex-shrink: 0; transition: transform .15s; }
+  .dnm-multiselect-btn.open .dnm-multiselect-caret { transform: rotate(180deg); }
+
+  .dnm-multiselect-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; z-index: 200;
+    min-width: 220px; max-height: 280px; overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    display: flex; flex-direction: column;
+  }
+
+  .dnm-multiselect-actions {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dnm-multiselect-action {
+    all: unset; cursor: pointer; flex: 1; text-align: center;
+    padding: 7px 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase;
+    color: var(--accent); transition: background .15s, color .15s;
+
+    &:hover:not(:disabled) { background: rgba(99,102,241,.10); }
+    &:disabled { opacity: .35; cursor: default; }
+
+    & + & { border-left: 1px solid var(--border); }
+
+    &--clear { color: var(--fg3);
+      &:hover:not(:disabled) { color: #ef4444; background: rgba(239,68,68,.07); }
+    }
+  }
+
+  .dnm-multiselect-opt {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px; cursor: pointer; font-size: 13px; color: var(--fg2);
+    transition: background .12s, color .12s;
+    user-select: none;
+
+    input[type="checkbox"] {
+      accent-color: var(--accent); width: 14px; height: 14px;
+      flex-shrink: 0; cursor: pointer;
+    }
+
+    &:hover   { background: var(--hover); color: var(--fg1); }
+    &.selected { color: var(--fg1); font-weight: 600; }
+  }
+}
