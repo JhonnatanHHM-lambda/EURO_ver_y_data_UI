@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Swal from 'sweetalert2';
 import api from '../../../../services/api';
+import MultiSelect from '../../../core/MultiSelect/components/MultiSelect';
 
 // ─── formatters ───────────────────────────────────────────────────────────────
 
@@ -167,7 +168,37 @@ const GaugeAusentismo = ({ pct = 0, horasTNL = 0, horasTotal = 0 }) => {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const INIT = { mes: '', anio: '', tienda: '', tipo_concepto: '', desc_concepto: '', empleado_cc: '', cargo: '' };
+const MESES_NOMBRES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+const _hoyAus = new Date();
+const isMesFuturoAus = (anio, mes) => {
+    if (!anio || !mes) return false;
+    const y = parseInt(anio);
+    if (isNaN(y)) return false;
+    const m = MESES_NOMBRES.indexOf(mes.toUpperCase());
+    if (m === -1) return false;
+    return y > _hoyAus.getFullYear() || (y === _hoyAus.getFullYear() && m > _hoyAus.getMonth());
+};
+
+const buildDefaults = () => {
+    const now = new Date();
+    return {
+        mes:           MESES_NOMBRES[now.getMonth()],
+        anio:          String(now.getFullYear()),
+        tiendas:       [],
+        tipo_concepto: '',
+        desc_concepto: '',
+        empleado_cc:   '',
+        cargo:         '',
+    };
+};
+
+const DEFAULTS = buildDefaults();
+
+const filtersEqual = (a, b) =>
+    a.mes === b.mes && a.anio === b.anio && a.tipo_concepto === b.tipo_concepto &&
+    a.desc_concepto === b.desc_concepto && a.empleado_cc === b.empleado_cc &&
+    a.cargo === b.cargo && JSON.stringify(a.tiendas) === JSON.stringify(b.tiendas);
 
 const barColor = (v) => {
     if (v <= 2) return '#22c55e';
@@ -181,56 +212,134 @@ const pctColor = (pct) => ({
     color:      pct > 7 ? '#ef4444'   : pct > 5 ? '#f97316'   : pct > 2 ? '#b89000'   : '#22c55e',
 });
 
+const labelFiltroActivo = (f) => {
+    const parts = [];
+    if (f.mes)  parts.push(f.mes.charAt(0) + f.mes.slice(1).toLowerCase());
+    if (f.anio) parts.push(f.anio);
+    if (f.tiendas.length === 1) parts.push(f.tiendas[0]);
+    if (f.tiendas.length > 1)  parts.push(`${f.tiendas.length} sedes`);
+    if (f.tipo_concepto) parts.push(f.tipo_concepto);
+    if (f.cargo) parts.push(f.cargo);
+    return parts.length ? parts.join(' · ') : 'Todos los datos';
+};
+
 // ─── TabAusentismo ────────────────────────────────────────────────────────────
 
 const TabAusentismo = () => {
-    const [data, setData]       = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState(INIT);
+    // pending: lo que el usuario está editando en los controles
+    // applied: lo que se envió al API (dispara el fetch)
+    const [pending,  setPending]  = useState(DEFAULTS);
+    const [applied,  setApplied]  = useState(DEFAULTS);
+    const [data,     setData]     = useState(null);
+    const [opts,     setOpts]     = useState({});
+    const [loading,  setLoading]  = useState(true);
+    const [loadingOpts, setLoadingOpts] = useState(true);
+    const abortRef = useRef(null);
 
-    const fetchData = useCallback(async (params) => {
+    const isDirty = !filtersEqual(pending, applied);
+
+    // ── Carga única de opciones de filtros ────────────────────────────────────
+    useEffect(() => {
+        api.get('dashboard/ausentismo/opciones/')
+            .then(res => setOpts(res.data))
+            .catch(() => {/* silencioso: las opciones son de comodidad */})
+            .finally(() => setLoadingOpts(false));
+    }, []);
+
+    // ── Carga de datos al aplicar filtros ────────────────────────────────────
+    const fetchData = useCallback(async (filters, isInitialLoad = false) => {
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
+
         setLoading(true);
+        const p = {};
+        if (filters.mes)            p.mes                   = filters.mes;
+        if (filters.anio)           p.anio                  = filters.anio;
+        if (filters.tiendas.length) p.tiendas               = filters.tiendas.join(',');
+        if (filters.tipo_concepto)  p.tipo_concepto         = filters.tipo_concepto;
+        if (filters.desc_concepto)  p.descripcion_concepto  = filters.desc_concepto;
+        if (filters.empleado_cc)    p.empleado_cc           = filters.empleado_cc;
+        if (filters.cargo)          p.cargo                 = filters.cargo;
+
         try {
-            const res = await api.get('dashboard/ausentismo/', { params });
+            const res = await api.get('dashboard/ausentismo/', {
+                params: p,
+                signal: abortRef.current.signal,
+            });
+
+            if (isInitialLoad && res.data?.ultimo_periodo_con_datos) {
+                const ult = res.data.ultimo_periodo_con_datos;
+                const periodoOk = ult.mes === filters.mes && ult.anio === filters.anio;
+                if (!periodoOk) {
+                    const fallback = { ...filters, mes: ult.mes, anio: ult.anio };
+                    setPending(fallback);
+                    setApplied(fallback);
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Período en curso sin datos completos',
+                        text: `Mostrando el último período disponible: ${ult.mes.charAt(0) + ult.mes.slice(1).toLowerCase()} ${ult.anio}`,
+                        toast: true,
+                        position: 'top-end',
+                        timer: 4500,
+                        showConfirmButton: false,
+                    });
+                    fetchData(fallback);
+                    return;
+                }
+            }
+
             setData(res.data);
-        } catch {
+        } catch (err) {
+            if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cargar el dashboard de ausentismo.', toast: true, position: 'top-end', timer: 3500, showConfirmButton: false });
         } finally {
             setLoading(false);
         }
     }, []);
 
+    // Carga inicial con los defaults (mes y año en curso)
     useEffect(() => {
-        const p = {};
-        if (filters.mes)           p.mes                   = filters.mes;
-        if (filters.anio)          p.anio                  = filters.anio;
-        if (filters.tienda)        p.tienda                = filters.tienda;
-        if (filters.tipo_concepto) p.tipo_concepto         = filters.tipo_concepto;
-        if (filters.desc_concepto) p.descripcion_concepto  = filters.desc_concepto;
-        if (filters.empleado_cc)   p.empleado_cc           = filters.empleado_cc;
-        if (filters.cargo)         p.cargo                 = filters.cargo;
-        fetchData(p);
-    }, [filters, fetchData]);
+        fetchData(DEFAULTS, true);
+    }, [fetchData]);
 
+    // ── Aplicar / Limpiar ────────────────────────────────────────────────────
+    const handleApply = useCallback(() => {
+        setApplied({ ...pending });
+        fetchData(pending);
+    }, [pending, fetchData]);
+
+    const handleClear = useCallback(() => {
+        setPending(DEFAULTS);
+        setApplied(DEFAULTS);
+        fetchData(DEFAULTS);
+    }, [fetchData]);
+
+    // Click en fila de tienda aplica directamente (sigue funcionando como antes)
     const handleTiendaClick = useCallback((name) => {
-        setFilters(f => ({ ...f, tienda: f.tienda === name ? '' : name }));
-    }, []);
+        setPending(f => {
+            const tiendas = f.tiendas.includes(name)
+                ? f.tiendas.filter(t => t !== name)
+                : [...f.tiendas, name];
+            const next = { ...f, tiendas };
+            setApplied(next);
+            fetchData(next);
+            return next;
+        });
+    }, [fetchData]);
 
-    const opts      = data ?? {};
-    const k         = opts.kpis ?? {};
-    const meses     = opts.meses_disponibles                   ?? [];
-    const anios     = opts.anios_disponibles                   ?? [];
-    const tiendas   = opts.tiendas_disponibles                 ?? [];
-    const tiposConc = opts.tipos_concepto_disponibles          ?? [];
-    const descsConc = opts.descripciones_concepto_disponibles  ?? [];
-    const empleados = opts.empleados_disponibles               ?? [];
-    const cargos    = opts.cargos_disponibles                  ?? [];
-    const tabTiendas  = opts.tabla_tiendas                     ?? [];
-    const tabConceptos = opts.tabla_conceptos_full             ?? [];
-    const tabColab    = opts.tabla_colaboradores               ?? [];
-    const compAus     = opts.comparacion_mensual_aus           ?? [];
-
-    const hasFilters = Object.values(filters).some(Boolean);
+    // ── Datos desestructurados ────────────────────────────────────────────────
+    const k           = data?.kpis            ?? {};
+    const meses       = opts.meses_disponibles                   ?? [];
+    const anios       = opts.anios_disponibles                   ?? [];
+    const tiendas     = opts.tiendas_disponibles                 ?? [];
+    const tiposConc   = opts.tipos_concepto_disponibles          ?? [];
+    const descsConc   = opts.descripciones_concepto_disponibles  ?? [];
+    const empleados   = opts.empleados_disponibles               ?? [];
+    const cargos      = opts.cargos_disponibles                  ?? [];
+    const tabTiendas  = data?.tabla_tiendas         ?? [];
+    const tabConceptos = data?.tabla_conceptos_full ?? [];
+    const tabColab    = data?.tabla_colaboradores   ?? [];
+    const compAus     = data?.comparacion_mensual_aus ?? [];
 
     // Pivot comparación mensual
     const { mesesComp, tiendasComp, pivotComp } = useMemo(() => {
@@ -254,53 +363,129 @@ const TabAusentismo = () => {
     return (
         <div className="dnm-tab-body">
 
-            {/* ── Filtros ──────────────────────────────────────────────────── */}
-            <div className="dnm-filters">
-                <select value={filters.mes} onChange={e => setFilters(f => ({ ...f, mes: e.target.value }))} className="dnm-select">
-                    <option value="">Todos los meses</option>
-                    {meses.map(m => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
-                </select>
-                <select value={filters.anio} onChange={e => setFilters(f => ({ ...f, anio: e.target.value }))} className="dnm-select">
-                    <option value="">Todos los años</option>
-                    {anios.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
-                <select value={filters.tienda} onChange={e => setFilters(f => ({ ...f, tienda: e.target.value }))} className="dnm-select">
-                    <option value="">Todas las sedes</option>
-                    {tiendas.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <select value={filters.tipo_concepto} onChange={e => setFilters(f => ({ ...f, tipo_concepto: e.target.value }))} className="dnm-select">
-                    <option value="">Tipo de Concepto</option>
-                    {tiposConc.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <select value={filters.desc_concepto} onChange={e => setFilters(f => ({ ...f, desc_concepto: e.target.value }))} className="dnm-select">
-                    <option value="">Descripción Concepto</option>
-                    {descsConc.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-                <select value={filters.empleado_cc} onChange={e => setFilters(f => ({ ...f, empleado_cc: e.target.value }))} className="dnm-select">
-                    <option value="">Empleado (cc)</option>
-                    {empleados.map(e => <option key={e.cc} value={e.cc}>{e.cc} — {e.nombre}</option>)}
-                </select>
-                <select value={filters.cargo} onChange={e => setFilters(f => ({ ...f, cargo: e.target.value }))} className="dnm-select">
-                    <option value="">Cargo</option>
-                    {cargos.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                {hasFilters && (
-                    <button className="dnm-clear-btn" onClick={() => setFilters(INIT)}>Limpiar filtros</button>
+            {/* ── Panel de filtros ─────────────────────────────────────────── */}
+            <div className="dnm-filter-panel">
+                <div className="dnm-filter-controls">
+                    <select
+                        value={pending.mes}
+                        onChange={e => setPending(f => ({ ...f, mes: e.target.value }))}
+                        className="dnm-select"
+                    >
+                        <option value="">Todos los meses</option>
+                        {meses.map(m => {
+                            const futuro = isMesFuturoAus(pending.anio, m);
+                            return (
+                                <option key={m} value={m} disabled={futuro}
+                                    style={futuro ? { color: 'var(--fg3)' } : undefined}>
+                                    {m.charAt(0) + m.slice(1).toLowerCase()}
+                                </option>
+                            );
+                        })}
+                    </select>
+
+                    <select
+                        value={pending.anio}
+                        onChange={e => setPending(f => ({ ...f, anio: e.target.value }))}
+                        className="dnm-select"
+                    >
+                        {anios.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+
+                    <MultiSelect
+                        value={pending.tiendas}
+                        onChange={sel => setPending(f => ({ ...f, tiendas: sel }))}
+                        options={tiendas}
+                        placeholder="Todas las sedes"
+                    />
+
+                    <select
+                        value={pending.tipo_concepto}
+                        onChange={e => setPending(f => ({ ...f, tipo_concepto: e.target.value }))}
+                        className="dnm-select"
+                    >
+                        <option value="">Tipo de Concepto</option>
+                        {tiposConc.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+
+                    <select
+                        value={pending.desc_concepto}
+                        onChange={e => setPending(f => ({ ...f, desc_concepto: e.target.value }))}
+                        className="dnm-select"
+                    >
+                        <option value="">Descripción Concepto</option>
+                        {descsConc.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+
+                    <select
+                        value={pending.empleado_cc}
+                        onChange={e => setPending(f => ({ ...f, empleado_cc: e.target.value }))}
+                        className="dnm-select"
+                    >
+                        <option value="">Empleado (cc)</option>
+                        {empleados.map(e => <option key={e.cc} value={e.cc}>{e.cc} — {e.nombre}</option>)}
+                    </select>
+
+                    <select
+                        value={pending.cargo}
+                        onChange={e => setPending(f => ({ ...f, cargo: e.target.value }))}
+                        className="dnm-select"
+                    >
+                        <option value="">Cargo</option>
+                        {cargos.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+
+                {/* Acciones de filtros */}
+                <div className="dnm-filter-actions">
+                    <button
+                        className={`dnm-apply-btn${isDirty ? ' dnm-apply-btn--dirty' : ''}`}
+                        onClick={handleApply}
+                        disabled={loading || !isDirty}
+                        title={isDirty ? 'Aplicar los filtros seleccionados' : 'Los filtros ya están aplicados'}
+                    >
+                        {loading ? <span className="dnm-spinner-sm" /> : null}
+                        {isDirty ? 'Aplicar filtros' : 'Filtros aplicados'}
+                    </button>
+
+                    <button
+                        className="dnm-clear-btn"
+                        onClick={handleClear}
+                        title="Restablecer al mes y año en curso"
+                    >
+                        Restablecer
+                    </button>
+                </div>
+            </div>
+
+            {/* ── Badge del período activo ─────────────────────────────────── */}
+            <div className={`dnm-active-badge${isDirty ? ' dnm-active-badge--pending' : ''}`}>
+                <span className="dnm-active-badge-icon">{isDirty ? '⏳' : '📊'}</span>
+                <span className="dnm-active-badge-label">
+                    {isDirty
+                        ? <><strong>Cambios pendientes</strong> · Mostrando: {labelFiltroActivo(applied)}</>
+                        : <><strong>Mostrando:</strong> {labelFiltroActivo(applied)}</>
+                    }
+                </span>
+                {isDirty && (
+                    <span className="dnm-active-badge-hint">Haz clic en «Aplicar filtros» para actualizar</span>
                 )}
             </div>
 
-            {/* ── Banner tienda seleccionada ───────────────────────────────── */}
-            {filters.tienda && (
+            {/* ── Banner sedes seleccionadas ───────────────────────────────── */}
+            {applied.tiendas.length > 0 && (
                 <div className="dnm-emp-banner" style={{
                     borderLeftColor: '#FFE302',
                     background: 'linear-gradient(135deg, rgba(255,227,2,.10), rgba(255,227,2,.03))',
                     borderColor: 'rgba(255,227,2,.28)',
                 }}>
-                    <span>🏬 Tienda seleccionada:</span>
-                    <strong>{filters.tienda}</strong>
+                    <span>🏬 {applied.tiendas.length === 1 ? 'Sede seleccionada:' : 'Sedes seleccionadas:'}</span>
+                    <strong>{applied.tiendas.join(' · ')}</strong>
                     <button className="dnm-emp-banner-close"
-                        onClick={() => setFilters(f => ({ ...f, tienda: '' }))}
-                        title="Quitar filtro de tienda">×</button>
+                        onClick={() => {
+                            const next = { ...applied, tiendas: [] };
+                            setPending(next); setApplied(next); fetchData(next);
+                        }}
+                        title="Quitar filtro de sedes">×</button>
                 </div>
             )}
 
@@ -375,7 +560,7 @@ const TabAusentismo = () => {
                     {/* ── Tienda (izq) + Conceptos (der) ─────────────────── */}
                     <div className="dnm-two-col">
 
-                        {/* Tabla Tienda — todas las columnas */}
+                        {/* Tabla Tienda */}
                         <div className="vyd-panel">
                             <div className="vyd-panel-head">
                                 <div className="vyd-panel-title">
@@ -403,7 +588,7 @@ const TabAusentismo = () => {
                                     <tbody>
                                         {tabTiendas.filter(r => r.tienda !== '__TOTAL__').map((r, i) => {
                                             const isDirec  = ['ADMINISTRACIÓN','CEDI','DESPOSTAR','OMNICANAL'].includes(r.tienda);
-                                            const selected = filters.tienda === r.tienda;
+                                            const selected = applied.tiendas.includes(r.tienda);
                                             const rowCls = [
                                                 'dnm-row-clickable',
                                                 selected ? 'dnm-row-selected' : '',
@@ -446,7 +631,7 @@ const TabAusentismo = () => {
                             </div>
                         </div>
 
-                        {/* Tabla Conceptos — todos los conceptos */}
+                        {/* Tabla Conceptos */}
                         <div className="vyd-panel">
                             <div className="vyd-panel-head">
                                 <div className="vyd-panel-title">
@@ -577,7 +762,7 @@ const TabAusentismo = () => {
                                     <tbody>
                                         {tabTiendas.filter(r => r.tienda !== '__TOTAL__').map((r, i) => {
                                             const isDirec  = ['ADMINISTRACIÓN','CEDI','DESPOSTAR','OMNICANAL'].includes(r.tienda);
-                                            const selected = filters.tienda === r.tienda;
+                                            const selected = applied.tiendas.includes(r.tienda);
                                             const rowCls = [
                                                 'dnm-row-clickable',
                                                 selected ? 'dnm-row-selected' : '',
@@ -614,7 +799,7 @@ const TabAusentismo = () => {
 
                     </div>
 
-                    {/* ── Comparación Mensual Tienda Conceptos TNL (ancho completo) ── */}
+                    {/* ── Comparación Mensual (ancho completo) ── */}
                     {mesesComp.length > 0 && (
                         <div className="vyd-panel">
                             <div className="vyd-panel-head">
@@ -645,7 +830,7 @@ const TabAusentismo = () => {
                                     <tbody>
                                         {tiendasComp.filter(t => t !== '__TOTAL__').map((tienda, i) => {
                                             const isDirec  = ['ADMINISTRACIÓN','CEDI','DESPOSTAR','OMNICANAL'].includes(tienda);
-                                            const selected = filters.tienda === tienda;
+                                            const selected = applied.tiendas.includes(tienda);
                                             const rowCls = [
                                                 'dnm-row-clickable',
                                                 selected ? 'dnm-row-selected' : '',
