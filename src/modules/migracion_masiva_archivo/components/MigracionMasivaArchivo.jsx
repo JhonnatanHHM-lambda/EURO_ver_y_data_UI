@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    FiCheck, FiDownload, FiInfo, FiPlay, FiRotateCcw, FiSquare, FiUpload,
+    FiCheck, FiDownload, FiInfo, FiPlay, FiRotateCcw, FiSend, FiSquare, FiUpload,
 } from 'react-icons/fi';
 import useMigracionMasivaArchivo from '../hooks/useMigracionMasivaArchivo';
 import Modal from '../../core/Modal/components/Modal';
+import swal from '../../../utils/swal';
 import '../utils/MigracionMasivaArchivo.scss';
 
-const ESTADOS_FINALIZADOS = ['FINALIZADO', 'FINALIZADO_CON_ERRORES'];
+// Estados que permiten reintentar/revisar un documento (mismo criterio que
+// _ESTADOS_RETROCEDIBLES en el backend, migracion_masiva_archivo/views.py).
+const ESTADOS_REVISABLES = ['REQUIERE_REVISION', 'ERROR_SAIA'];
+
+const usuarioActual = () => JSON.parse(localStorage.getItem('user') || '{}');
 
 const badgeClass = (estado = '') => `mma-pill ${estado.toLowerCase().replaceAll('_', '-')}`;
 
@@ -20,18 +25,58 @@ const fmtFecha = (value) => (
     }) : '—'
 );
 
+// Solo contempla los estados reales de DocumentoDigitalizado.estado_proceso
+// (migracion_masiva_archivo/models.py: ESTADOS_DOCUMENTO) — nada de estados
+// inventados que el backend nunca produce.
 const faseDesdeEstado = (estado = '') => {
-    if (estado === 'CARGADO_SAIA' || estado === 'PROCESADO') return ['OK', 'OK', 'OK', 'OK', 'OK', 'Cargado'];
+    if (estado === 'CARGADO_SAIA') return ['OK', 'OK', 'OK', 'OK', 'OK', 'Cargado'];
     if (estado === 'ERROR_SAIA') return ['OK', 'OK', 'OK', 'OK', 'ERROR', 'Error SAIA'];
-    if (estado === 'ERROR') return ['OK', 'ERROR', '-', '-', '-', 'Error'];
     if (estado === 'REQUIERE_REVISION') return ['OK', 'OK', 'REVISION', '-', '-', 'Revisión'];
     if (estado === 'RELACIONADO') return ['OK', 'OK', 'OK', 'EN_COLA', 'EN_COLA', 'En cola'];
     if (estado === 'VALIDADO') return ['OK', 'OK', 'EN_COLA', 'EN_COLA', 'EN_COLA', 'Validado'];
     if (estado === 'METADATA_EXTRAIDA') return ['OK', 'OK', 'EN_COLA', '-', '-', 'Metadata'];
     if (estado === 'OCR_PROCESADO') return ['OK', 'OK', '-', '-', '-', 'OCR'];
     if (estado === 'LEIDO') return ['OK', 'EN_COLA', '-', '-', '-', 'Leído'];
-    if (estado === 'VALIDANDO') return ['OK', 'EN_PROCESO', '-', '-', '-', 'En proceso'];
     return ['PENDIENTE', '-', '-', '-', '-', 'Pendiente'];
+};
+
+const FASES_DEF = [
+    { label: 'F1 · Inventario' },
+    { label: 'F2 · OCR / Metadata', inicio: 'fase2_inicio', fin: 'fase2_fin' },
+    { label: 'F3 · Relaciones',     inicio: 'fase3_inicio', fin: 'fase3_fin' },
+    { label: 'F4 · Validación',     inicio: 'fase4_inicio', fin: 'fase4_fin' },
+    { label: 'F5 · Carga SAIA',     inicio: 'fase5_inicio', fin: 'fase5_fin', omitida: 'fase5_omitida' },
+];
+
+const ETIQUETA_FASE = {
+    completado: 'Completado',
+    en_proceso: 'En proceso',
+    pendiente: 'Pendiente',
+    omitida: 'No ejecutada (solo extracción)',
+    error: 'Error',
+};
+
+// Deriva el estado real de cada fase a partir de los eventos que
+// tasks.py registra en LogProcesoDocumental (fase2_inicio/fin, fase3_inicio/fin...),
+// en vez de aproximarlo con el ratio de "procesados/total": la API no expone una
+// "fase actual" explícita, así que los logs son la única fuente de verdad real.
+const calcularFases = (logs, hayCarga) => {
+    const eventos = new Set((logs || []).map(l => l.evento));
+    const huboError = eventos.has('flujo_error') || eventos.has('saia_error') || eventos.has('saia_login_error');
+
+    return FASES_DEF.map((fase, index) => {
+        if (index === 0) {
+            return { ...fase, estado: hayCarga ? 'completado' : 'pendiente', pct: hayCarga ? 100 : 0 };
+        }
+        if (fase.fin && eventos.has(fase.fin)) return { ...fase, estado: 'completado', pct: 100 };
+        if (fase.omitida && eventos.has(fase.omitida)) return { ...fase, estado: 'omitida', pct: 0 };
+        if (fase.inicio && eventos.has(fase.inicio)) {
+            return huboError
+                ? { ...fase, estado: 'error', pct: 100 }
+                : { ...fase, estado: 'en_proceso', pct: 50 };
+        }
+        return { ...fase, estado: 'pendiente', pct: 0 };
+    });
 };
 
 const FaseBadge = ({ value, fecha }) => {
@@ -69,8 +114,21 @@ const MigracionMasivaArchivo = () => {
         marcarRevisado,
         marcarOk,
         descargarReporte,
+        reenviarReporte,
         guardarConfig,
     } = useMigracionMasivaArchivo();
+
+    // El backend exige can_upload_migracion_masiva_archivo_saia además de
+    // can_manage_migracion_masiva_archivo para: procesar con cargar_saia=true,
+    // marcar-revisado y marcar-ok (ambas reencolan una carga real a SAIA — ver
+    // migracion_masiva_archivo/views.py). Sin este chequeo, un usuario sin ese
+    // permiso vería un 403 garantizado en cada clic.
+    const { puedeCargarSaia } = useMemo(() => {
+        const user = usuarioActual();
+        const permisos = user.permisos_rol || [];
+        return { puedeCargarSaia: !!user.is_superuser || permisos.includes('can_upload_migracion_masiva_archivo_saia') };
+    }, []);
+    const [cargarSaia, setCargarSaia] = useState(puedeCargarSaia);
 
     useEffect(() => {
         if (config?.correo_destino && !correoModificado) {
@@ -90,23 +148,13 @@ const MigracionMasivaArchivo = () => {
 
     const totales = useMemo(() => {
         const total = carga?.total_archivos ?? documentos.length ?? archivos.length;
-        const cargados = carga?.exitosos ?? documentos.filter(d => ['CARGADO_SAIA', 'PROCESADO'].includes(d.estado_proceso)).length;
-        const errores = carga?.fallidos ?? documentos.filter(d => ['ERROR', 'ERROR_SAIA'].includes(d.estado_proceso)).length;
+        const cargados = carga?.exitosos ?? documentos.filter(d => d.estado_proceso === 'CARGADO_SAIA').length;
+        const errores = carga?.fallidos ?? documentos.filter(d => d.estado_proceso === 'ERROR_SAIA').length;
         const revision = carga?.pendientes_revision ?? documentos.filter(d => d.estado_proceso === 'REQUIERE_REVISION').length;
         return { total, cargados, errores, revision };
     }, [archivos.length, carga, documentos]);
 
-    const progreso = useMemo(() => {
-        const total = Math.max(totales.total, 1);
-        const base = Math.round(((carga?.procesados || 0) / total) * 100);
-        const finalizado = ESTADOS_FINALIZADOS.includes(carga?.estado_proceso);
-        const f1 = totales.total > 0 ? 100 : 0;
-        const f2 = Math.max(base, documentos.length ? 100 : 0);
-        const f3 = finalizado ? 100 : base;
-        const f4 = finalizado ? 100 : base;
-        const f5 = finalizado ? 100 : Math.min(base, 60);
-        return [f1, f2, f3, f4, f5];
-    }, [carga, documentos.length, totales.total]);
+    const fases = useMemo(() => calcularFases(logs, !!carga), [logs, carga]);
 
     const estadoUi = carga?.estado_proceso || (archivos.length ? 'PENDIENTE' : 'Inactivo');
     const estaActivo = ['PENDIENTE', 'EN_PROCESO'].includes(carga?.estado_proceso) || procesando;
@@ -118,14 +166,10 @@ const MigracionMasivaArchivo = () => {
 
     const handleIniciar = async () => {
         if (!nombre.trim() || !archivos.length) return;
-        const nuevaCarga = await crearCarga({
-            nombre,
-            descripcion: correoDestino ? `Correo destino: ${correoDestino}` : '',
-            archivos,
-        });
+        const nuevaCarga = await crearCarga({ nombre, archivos });
         if (!nuevaCarga) return;
         await procesarCarga(nuevaCarga.id, {
-            cargar_saia: true,
+            cargar_saia: cargarSaia,
             dry_run: false,
             headful: false,
             enviar_correo: !!correoDestino,
@@ -140,7 +184,24 @@ const MigracionMasivaArchivo = () => {
         if (res) setCorreoModificado(false);
     };
 
-    const documentosPendientesRevision = documentos.filter(d => d.estado_proceso === 'REQUIERE_REVISION');
+    const handleReenviarReporte = async () => {
+        if (!carga) return;
+        const { value: destino } = await swal({
+            title: 'Reenviar reporte',
+            input: 'email',
+            inputLabel: 'Correo destinatario',
+            inputValue: correoDestino,
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            cancelButtonText: 'Cancelar',
+        });
+        if (!destino) return;
+        await reenviarReporte(carga.id, [destino]);
+    };
+
+    // Mismo criterio que _ESTADOS_RETROCEDIBLES en el backend: un documento en
+    // ERROR_SAIA también se revisa/reintenta manualmente, no solo REQUIERE_REVISION.
+    const documentosPendientesRevision = documentos.filter(d => ESTADOS_REVISABLES.includes(d.estado_proceso));
     const documentosCargados = documentos.filter(d => d.estado_proceso === 'CARGADO_SAIA');
 
     return (
@@ -185,6 +246,19 @@ const MigracionMasivaArchivo = () => {
                         {guardandoCorreo ? 'Guardando…' : 'Guardar'}
                     </button>
                 )}
+
+                <label
+                    className="mma-checkbox"
+                    title={puedeCargarSaia ? 'Cargar los documentos validados a SAIA' : 'Tu rol no tiene permiso para cargar a SAIA — solo se ejecutarán las fases de extracción/validación'}
+                >
+                    <input
+                        type="checkbox"
+                        checked={cargarSaia}
+                        disabled={!puedeCargarSaia}
+                        onChange={e => setCargarSaia(e.target.checked)}
+                    />
+                    Cargar a SAIA
+                </label>
 
                 <div className="mma-toolbar-spacer" />
 
@@ -235,17 +309,11 @@ const MigracionMasivaArchivo = () => {
             </div>
 
             <div className="mma-phases">
-                {[
-                    'F1 · Inventario',
-                    'F2 · OCR / Metadata',
-                    'F3 · Relaciones',
-                    'F4 · Validación',
-                    'F5 · Carga SAIA',
-                ].map((fase, index) => (
-                    <div key={fase} className="mma-progress">
-                        <div>{fase}</div>
-                        <span><i style={{ width: `${progreso[index]}%` }} /></span>
-                        <small>{progreso[index]}%</small>
+                {fases.map((fase) => (
+                    <div key={fase.label} className={`mma-progress ${fase.estado}`}>
+                        <div>{fase.label}</div>
+                        <span><i style={{ width: `${fase.pct}%` }} /></span>
+                        <small>{ETIQUETA_FASE[fase.estado]}</small>
                     </div>
                 ))}
             </div>
@@ -265,9 +333,14 @@ const MigracionMasivaArchivo = () => {
                         Logs de ejecución
                     </button>
                     {carga && (
-                        <button className="mma-download-tab" onClick={() => descargarReporte(carga.id)}>
-                            <FiDownload size={13} /> Reporte
-                        </button>
+                        <div className="mma-download-tab">
+                            <button className="mma-tab-action" onClick={() => descargarReporte(carga.id)}>
+                                <FiDownload size={13} /> Reporte
+                            </button>
+                            <button className="mma-tab-action" onClick={handleReenviarReporte}>
+                                <FiSend size={13} /> Reenviar
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -305,7 +378,13 @@ const MigracionMasivaArchivo = () => {
                                             <button className="mma-btn light" style={{ height: 26, padding: '0 8px', fontSize: 11 }} onClick={() => setDetalleDoc(doc)}>
                                                 <FiInfo size={11} /> Detalle
                                             </button>
-                                            <button className="mma-btn primary" style={{ height: 26, padding: '0 8px', fontSize: 11, marginLeft: 6 }} onClick={() => marcarRevisado(carga.id, doc.id)}>
+                                            <button
+                                                className="mma-btn primary"
+                                                style={{ height: 26, padding: '0 8px', fontSize: 11, marginLeft: 6 }}
+                                                onClick={() => marcarRevisado(carga.id, doc.id)}
+                                                disabled={!puedeCargarSaia}
+                                                title={puedeCargarSaia ? '' : 'Tu rol no tiene permiso para reencolar cargas a SAIA'}
+                                            >
                                                 <FiCheck size={11} /> Revisado
                                             </button>
                                         </td>
@@ -437,10 +516,12 @@ const MigracionMasivaArchivo = () => {
                                 </ul>
                             </>
                         )}
-                        {['REQUIERE_REVISION', 'ERROR_SAIA'].includes(detalleDoc.estado_proceso) && carga && (
+                        {ESTADOS_REVISABLES.includes(detalleDoc.estado_proceso) && carga && (
                             <button
                                 className="mma-btn primary"
                                 onClick={() => { marcarOk(carga.id, detalleDoc.id); setDetalleDoc(null); }}
+                                disabled={!puedeCargarSaia}
+                                title={puedeCargarSaia ? '' : 'Tu rol no tiene permiso para reencolar cargas a SAIA'}
                             >
                                 <FiCheck size={12} /> Marcar OK y reintentar
                             </button>

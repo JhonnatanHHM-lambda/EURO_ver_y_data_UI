@@ -67,6 +67,28 @@
     min-width: 8px;
 }
 
+.mma-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--fg2);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+
+    input[type='checkbox'] {
+        width: 14px;
+        height: 14px;
+        accent-color: var(--accent);
+        cursor: pointer;
+
+        &:disabled {
+            cursor: not-allowed;
+        }
+    }
+}
+
 .mma-btn {
     height: 30px;
     border-radius: 8px;
@@ -239,6 +261,25 @@
     color: var(--fg3);
 }
 
+// Color de la barra y de la etiqueta según el estado real derivado de los logs
+// (ver calcularFases en MigracionMasivaArchivo.jsx)
+.mma-progress.error i { background: var(--danger); }
+.mma-progress.error small { color: var(--danger); }
+
+.mma-progress.en_proceso i {
+    background: var(--accent);
+    animation: mma-pulse 1.4s ease-in-out infinite;
+}
+.mma-progress.en_proceso small { color: var(--accent); }
+
+.mma-progress.omitida i { background: var(--fg4); }
+.mma-progress.omitida small { color: var(--fg4); }
+
+@keyframes mma-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
 .mma-tabs-panel {
     min-height: 300px;
     border-radius: 12px;
@@ -297,7 +338,24 @@
     margin-left: auto;
     display: inline-flex;
     align-items: center;
+    gap: 6px;
+    padding-right: 8px;
+}
+
+.mma-tab-action {
+    display: inline-flex;
+    align-items: center;
     gap: 5px;
+    border: 0;
+    background: transparent;
+    color: var(--fg2);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover { background: var(--surface2); color: var(--accent); }
 }
 
 .mma-table-wrap {

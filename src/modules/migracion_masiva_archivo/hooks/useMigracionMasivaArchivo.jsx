@@ -74,14 +74,19 @@ const useMigracionMasivaArchivo = () => {
         }, 4000);
     }, [cargarDetalle, detenerPolling]);
 
-    const crearCarga = useCallback(async ({ nombre, descripcion, archivos }) => {
+    const crearCarga = useCallback(async ({ nombre, descripcion, archivos, archivosSecundarios }) => {
         const formData = new FormData();
         formData.append('nombre', nombre);
         if (descripcion) formData.append('descripcion', descripcion);
         archivos.forEach(archivo => formData.append('archivos', archivo));
+        (archivosSecundarios || []).forEach(archivo => formData.append('archivos_secundarios', archivo));
         try {
             const res = await api.post('migracion-masiva-archivo/cargas/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                // No fijar Content-Type manualmente: axios/el navegador deben generar
+                // "multipart/form-data; boundary=..." solos a partir del FormData. Si se
+                // fuerza el valor sin boundary (como estaba antes), Django no puede
+                // parsear el body y request.FILES llega vacío.
+                headers: { 'Content-Type': undefined },
             });
             setCargaActual(res.data);
             setCargas(prev => [res.data, ...prev]);
@@ -164,6 +169,20 @@ const useMigracionMasivaArchivo = () => {
         }
     }, []);
 
+    const reenviarReporte = useCallback(async (id, destinatarios, conDetalle = false) => {
+        try {
+            const res = await api.post(`migracion-masiva-archivo/cargas/${id}/reenviar-reporte/`, {
+                destinatarios,
+                con_detalle: conDetalle,
+            });
+            swal({ title: 'Reporte reenviado', icon: 'success', text: `Enviado a: ${res.data.destinatarios.join(', ')}` });
+            return res.data;
+        } catch (e) {
+            mostrarError('No fue posible reenviar el reporte', e);
+            return null;
+        }
+    }, []);
+
     const cargarConfig = useCallback(async () => {
         try {
             const res = await api.get('migracion-masiva-archivo/config/');
@@ -207,6 +226,7 @@ const useMigracionMasivaArchivo = () => {
         marcarRevisado,
         marcarOk,
         descargarReporte,
+        reenviarReporte,
         cargarConfig,
         guardarConfig,
     };
