@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     FiCheck, FiChevronRight, FiDownload, FiInfo, FiPlay, FiRotateCcw, FiSend, FiSquare, FiUpload,
 } from 'react-icons/fi';
@@ -151,6 +151,14 @@ const MigracionMasivaArchivo = () => {
     const [tab, setTab] = useState('documentos');
     const [detalleDoc, setDetalleDoc] = useState(null);
     const [detalleFase, setDetalleFase] = useState(null);
+    const [preview, setPreview] = useState(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [preflight, setPreflight] = useState(null);
+    const [estadoOperacion, setEstadoOperacion] = useState(null);
+    const [dryRun, setDryRun] = useState(true);
+    const [headful, setHeadful] = useState(false);
+    const [tamanoSublote, setTamanoSublote] = useState(10);
+    const [pausaEntre, setPausaEntre] = useState(3);
 
     const {
         cargas,
@@ -158,7 +166,12 @@ const MigracionMasivaArchivo = () => {
         procesando,
         config,
         crearCarga,
+        previewCarga,
         cargarDetalleErrorDocumento,
+        preflightOperacion,
+        cargarEstadoOperacion,
+        qaSaia,
+        ejecutarLimpieza,
         procesarCarga,
         reintentarFallidos,
         pararCarga,
@@ -190,6 +203,7 @@ const MigracionMasivaArchivo = () => {
     const carga = cargaActual || cargas[0] || null;
     const documentos = carga?.archivos || [];
     const logs = carga?.logs || [];
+    const previewOperativo = preview?.preview_operativo || null;
 
     const seleccionResumen = useMemo(() => {
         if (!archivos.length) return '';
@@ -238,22 +252,92 @@ const MigracionMasivaArchivo = () => {
         }
     };
 
-    const handleSeleccionArchivos = (event) => {
+    const handleSeleccionArchivos = async (event) => {
         const seleccionados = Array.from(event.target.files || []);
         setArchivos(seleccionados);
+        setPreview(null);
+        setPreflight(null);
+        if (!seleccionados.length) return;
+        setPreviewLoading(true);
+        try {
+            const data = await previewCarga({ archivos: seleccionados });
+            setPreview(data);
+        } catch (error) {
+            swal({ title: 'No fue posible generar el preview', icon: 'error', text: error?.response?.data?.error || 'Revisa los archivos seleccionados.' });
+        } finally {
+            setPreviewLoading(false);
+        }
     };
 
     const handleIniciar = async () => {
         if (!nombre.trim() || !archivos.length) return;
-        const nuevaCarga = await crearCarga({ nombre, archivos });
-        if (!nuevaCarga) return;
-        await procesarCarga(nuevaCarga.id, {
+        const opciones = {
             cargar_saia: cargarSaia,
-            dry_run: false,
-            headful: false,
+            dry_run: dryRun,
+            headful,
+            tamano_sublote: Number(tamanoSublote) || 10,
+            pausa_entre: Number(pausaEntre) || 0,
             enviar_correo: !!correoDestino,
             destinatario: correoDestino,
-        });
+        };
+        try {
+            const pf = await preflightOperacion(opciones);
+            setPreflight(pf);
+        } catch (error) {
+            const pf = error?.response?.data?.preflight || error?.response?.data;
+            setPreflight(pf || null);
+            swal({ title: 'Preflight fallido', icon: 'error', text: pf?.errores?.map(item => `${item.titulo || item.clave}: ${item.mensaje || 'No disponible'}`).join(' | ') || 'No se pudo validar la operación.' });
+            return;
+        }
+        const nuevaCarga = await crearCarga({ nombre, archivos });
+        if (!nuevaCarga) return;
+        await procesarCarga(nuevaCarga.id, opciones);
+    };
+
+    const refrescarEstadoOperacion = useCallback(async () => {
+        try {
+            const data = await cargarEstadoOperacion();
+            setEstadoOperacion(data);
+        } catch {
+            setEstadoOperacion(null);
+        }
+    }, [cargarEstadoOperacion]);
+
+    useEffect(() => {
+        refrescarEstadoOperacion();
+        const id = setInterval(refrescarEstadoOperacion, 8000);
+        return () => clearInterval(id);
+    }, [refrescarEstadoOperacion]);
+
+    const handlePreflightManual = async () => {
+        try {
+            const pf = await preflightOperacion({ enviar_correo: !!correoDestino, destinatario: correoDestino });
+            setPreflight(pf);
+            swal({ title: 'Preflight OK', icon: 'success', text: 'SAIA, Chromium y MinIO respondieron correctamente.' });
+        } catch (error) {
+            const pf = error?.response?.data?.preflight || error?.response?.data;
+            setPreflight(pf || null);
+            swal({ title: 'Preflight fallido', icon: 'error', text: pf?.errores?.map(item => `${item.titulo || item.clave}: ${item.mensaje || 'No disponible'}`).join(' | ') || 'No se pudo validar la operación.' });
+        }
+    };
+
+    const handleLimpiezaDryRun = async () => {
+        try {
+            const data = await ejecutarLimpieza({ tipo: 'all', dry_run: true });
+            swal({ title: 'Dry-run de limpieza', icon: 'info', text: JSON.stringify(data.resultados) });
+        } catch (error) {
+            swal({ title: 'No fue posible probar limpieza', icon: 'error', text: error?.response?.data?.error || 'Revisa la configuración de MinIO.' });
+        }
+    };
+
+    const handleDryRunDoc = async () => {
+        if (!detalleFase?.doc?.id) return;
+        try {
+            const data = await qaSaia({ accion: 'dry_run_documento', documento_id: detalleFase.doc.id, headful });
+            swal({ title: 'Dry-run encolado', icon: 'success', text: `Task: ${data.task_id}` });
+        } catch (error) {
+            swal({ title: 'No fue posible encolar dry-run', icon: 'error', text: error?.response?.data?.error || 'Documento no elegible para prueba SAIA.' });
+        }
     };
 
     const handleGuardarCorreo = async () => {
@@ -338,9 +422,22 @@ const MigracionMasivaArchivo = () => {
                     />
                     Cargar a SAIA
                 </label>
+                <label className="mma-checkbox" title="Ejecuta navegacion hasta antes de confirmar carga real">
+                    <input type="checkbox" checked={dryRun} onChange={e => setDryRun(e.target.checked)} />
+                    Dry-run
+                </label>
+                <label className="mma-checkbox" title="Mostrar navegador solo para QA">
+                    <input type="checkbox" checked={headful} onChange={e => setHeadful(e.target.checked)} />
+                    Headful QA
+                </label>
+                <input className="mma-mini-input" type="number" min="1" max="100" value={tamanoSublote} onChange={e => setTamanoSublote(e.target.value)} title="Tamano de sublote" />
+                <input className="mma-mini-input" type="number" min="0" max="60" value={pausaEntre} onChange={e => setPausaEntre(e.target.value)} title="Pausa entre documentos" />
 
                 <div className="mma-toolbar-spacer" />
 
+                <button className="mma-btn light" onClick={handlePreflightManual} disabled={procesando}>
+                    <FiInfo size={14} /> Preflight
+                </button>
                 <button className="mma-btn primary" onClick={handleIniciar} disabled={estaActivo}>
                     <FiPlay size={14} /> INICIAR
                 </button>
@@ -353,6 +450,65 @@ const MigracionMasivaArchivo = () => {
                 Envía desde: <span>{correoDestino || '—'}</span>
                 {seleccionResumen && <strong> · {seleccionResumen}</strong>}
             </div>
+
+            {(previewLoading || previewOperativo || preflight || estadoOperacion) && (
+                <div className="mma-operacion-grid">
+                    <div className="mma-op-panel">
+                        <div className="mma-op-head">
+                            <strong>Preview operativo</strong>
+                            {previewLoading && <span>Analizando...</span>}
+                        </div>
+                        {previewOperativo ? (
+                            <>
+                                <div className="mma-op-metrics">
+                                    <span>PDF <b>{previewOperativo.totales?.pdf ?? 0}</b></span>
+                                    <span>No PDF <b>{previewOperativo.totales?.no_pdf ?? 0}</b></span>
+                                    <span>Rutas OK <b>{previewOperativo.totales?.rutas_reconocidas ?? 0}</b></span>
+                                    <span>Sin ruta <b>{previewOperativo.totales?.rutas_no_reconocidas ?? 0}</b></span>
+                                    <span>Duplicados <b>{previewOperativo.totales?.duplicados_probables ?? 0}</b></span>
+                                    <span>Bloqueos F1 <b>{previewOperativo.totales?.bloqueos_fase1 ?? 0}</b></span>
+                                </div>
+                                {(previewOperativo.bloqueos_fase1 || []).slice(0, 4).map((item, index) => (
+                                    <p key={`${item.ruta_archivo}-${index}`} className="mma-op-warning">{item.codigo}: {item.nombre_archivo} - {item.mensaje}</p>
+                                ))}
+                                {(previewOperativo.lotes_reutilizables || []).length > 0 && (
+                                    <p className="mma-op-info">Lotes reutilizables: {previewOperativo.lotes_reutilizables.map(l => `#${l.lote_id}`).join(', ')}</p>
+                                )}
+                            </>
+                        ) : (
+                            <p>Selecciona una carpeta para validar PDFs, omitidos, rutas y duplicados antes de crear el lote.</p>
+                        )}
+                    </div>
+                    <div className="mma-op-panel">
+                        <div className="mma-op-head">
+                            <strong>Estado operativo</strong>
+                            <button className="mma-link-btn" onClick={refrescarEstadoOperacion}>Actualizar</button>
+                        </div>
+                        <p>Proceso activo: <b>{estadoOperacion?.proceso_activo ? 'Si' : 'No'}</b></p>
+                        <p>Lote activo: <b>{estadoOperacion?.lote_activo?.nombre || 'Ninguno'}</b></p>
+                        <p>Fase actual: <b>{estadoOperacion?.fase_actual || 'Sin fase activa'}</b></p>
+                        {estadoOperacion?.ultimo_error && (
+                            <p className="mma-op-warning">{estadoOperacion.ultimo_error.evento}: {estadoOperacion.ultimo_error.mensaje}</p>
+                        )}
+                        <div className="mma-op-actions">
+                            <button className="mma-btn light" onClick={handleLimpiezaDryRun}>Dry-run limpieza</button>
+                        </div>
+                    </div>
+                    {preflight && (
+                        <div className="mma-op-panel">
+                            <div className="mma-op-head">
+                                <strong>Preflight</strong>
+                                <span className={preflight.ok ? 'mma-op-ok' : 'mma-op-error'}>{preflight.ok ? 'OK' : 'Fallido'}</span>
+                            </div>
+                            {(preflight.checks || []).map(item => (
+                                <p key={item.clave} className={item.ok ? 'mma-op-info' : 'mma-op-warning'}>
+                                    {item.titulo || item.clave}: {item.ok ? 'OK' : item.mensaje}
+                                </p>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="mma-cards">
                 <div className="mma-card">
@@ -603,6 +759,28 @@ const MigracionMasivaArchivo = () => {
                                             <li>Documento SAIA: {valorCampo(detalleFase.diagnostico.ultimo_intento_saia.id_documento_saia)}</li>
                                             <li>Mensaje: {valorCampo(detalleFase.diagnostico.ultimo_intento_saia.mensaje_error)}</li>
                                         </ul>
+                                    </>
+                                )}
+                                <div className="mma-phase-actions">
+                                    <button className="mma-btn light" onClick={handleDryRunDoc} disabled={!detalleFase?.doc?.id}>
+                                        <FiPlay size={13} /> Dry-run SAIA
+                                    </button>
+                                </div>
+                                {(detalleFase.diagnostico?.evidencias_saia || []).length > 0 && (
+                                    <>
+                                        <p><strong>Capturas SAIA</strong></p>
+                                        <div className="mma-evidence-grid">
+                                            {detalleFase.diagnostico.evidencias_saia.map((evidencia, index) => (
+                                                <a key={`${evidencia.url}-${index}`} href={evidencia.url} target="_blank" rel="noreferrer" className="mma-evidence">
+                                                    {String(evidencia.mime || '').startsWith('image/') ? (
+                                                        <img src={evidencia.url} alt={evidencia.tipo || evidencia.nombre} />
+                                                    ) : (
+                                                        <span>{evidencia.nombre}</span>
+                                                    )}
+                                                    <small>{evidencia.tipo}</small>
+                                                </a>
+                                            ))}
+                                        </div>
                                     </>
                                 )}
                                 {(detalleFase.phase.logs || []).length > 0 && (

@@ -623,10 +623,159 @@
     color: var(--fg2);
 }
 
+.mma-mini-input {
+    width: 58px;
+    height: 34px;
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--fg1);
+    padding: 0 8px;
+    font-size: 12px;
+}
+
+.mma-operacion-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(260px, .8fr) minmax(240px, .75fr);
+    gap: 10px;
+    margin: 10px 0 14px;
+}
+
+.mma-op-panel {
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    background: var(--surface);
+    padding: 12px;
+    min-width: 0;
+}
+
+.mma-op-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--fg1);
+}
+
+.mma-op-head strong {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0;
+}
+
+.mma-op-head span,
+.mma-op-panel p {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: var(--fg2);
+    overflow-wrap: anywhere;
+}
+
+.mma-op-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mma-op-metrics span {
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    padding: 6px;
+    color: var(--fg3);
+    font-size: 11px;
+}
+
+.mma-op-metrics b {
+    display: block;
+    margin-top: 2px;
+    color: var(--fg1);
+    font-size: 15px;
+}
+
+.mma-op-warning {
+    color: var(--warning) !important;
+}
+
+.mma-op-info {
+    color: var(--fg2) !important;
+}
+
+.mma-op-ok {
+    color: var(--success) !important;
+    font-weight: 800;
+}
+
+.mma-op-error {
+    color: var(--danger) !important;
+    font-weight: 800;
+}
+
+.mma-op-actions {
+    margin-top: 8px;
+}
+
+.mma-link-btn {
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mma-phase-actions {
+    margin: 8px 0 12px;
+}
+
+.mma-evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.mma-evidence {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    padding: 6px;
+    color: var(--fg2);
+    text-decoration: none;
+}
+
+.mma-evidence img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 5px;
+    background: var(--surface2);
+}
+
+.mma-evidence span {
+    min-height: 54px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.mma-evidence small {
+    color: var(--fg3);
+    overflow-wrap: anywhere;
+}
+
 @media (max-width: 1200px) {
     .mma-cards,
     .mma-phases {
         grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
+    .mma-operacion-grid {
+        grid-template-columns: 1fr 1fr;
     }
 }
 
@@ -643,6 +792,11 @@
 
     .mma-btn {
         flex: 1 1 auto;
+    }
+
+    .mma-operacion-grid,
+    .mma-op-metrics {
+        grid-template-columns: 1fr;
     }
 
 }

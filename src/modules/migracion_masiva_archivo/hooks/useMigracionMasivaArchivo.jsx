@@ -9,6 +9,9 @@ const apiErrorMessage = (error) => {
     if (!data) return error?.message || 'Error inesperado.';
     if (typeof data === 'string') return data;
     if (data.detail) return data.detail;
+    if (data.preflight?.errores?.length) {
+        return data.preflight.errores.map(item => `${item.titulo || item.clave}: ${item.mensaje || 'No disponible'}`).join(' | ');
+    }
     return Object.entries(data)
         .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
         .join(' | ') || 'Error inesperado.';
@@ -64,6 +67,31 @@ const useMigracionMasivaArchivo = () => {
         return res.data;
     }, []);
 
+    const preflightOperacion = useCallback(async (opciones = {}) => {
+        const res = await api.post('migracion-masiva/operacion/preflight/', opciones);
+        return res.data;
+    }, []);
+
+    const cargarEstadoOperacion = useCallback(async () => {
+        const res = await api.get('migracion-masiva/operacion/estado/');
+        return res.data;
+    }, []);
+
+    const cargarAuditoria = useCallback(async (params = {}) => {
+        const res = await api.get('migracion-masiva/operacion/auditoria/', { params });
+        return res.data;
+    }, []);
+
+    const qaSaia = useCallback(async (payload = {}) => {
+        const res = await api.post('migracion-masiva/operacion/qa-saia/', payload);
+        return res.data;
+    }, []);
+
+    const ejecutarLimpieza = useCallback(async (payload = {}) => {
+        const res = await api.post('migracion-masiva/operacion/limpieza/', payload);
+        return res.data;
+    }, []);
+
     const iniciarPolling = useCallback((id) => {
         detenerPolling();
         pollingRef.current = setInterval(async () => {
@@ -107,6 +135,22 @@ const useMigracionMasivaArchivo = () => {
             mostrarError('No fue posible crear la carga', e);
             return null;
         }
+    }, []);
+
+    const previewCarga = useCallback(async ({ archivos, archivosSecundarios }) => {
+        const formData = new FormData();
+        archivos.forEach((archivo) => {
+            formData.append('archivos', archivo);
+            formData.append('rutas', archivo.webkitRelativePath || archivo.name);
+        });
+        (archivosSecundarios || []).forEach((archivo) => {
+            formData.append('archivos_secundarios', archivo);
+            formData.append('rutas_secundarias', archivo.webkitRelativePath || archivo.name);
+        });
+        const res = await api.post('migracion-masiva/lotes/preview/', formData, {
+            headers: { 'Content-Type': undefined },
+        });
+        return res.data;
     }, []);
 
     const procesarCarga = useCallback(async (id, opciones = {}) => {
@@ -232,7 +276,13 @@ const useMigracionMasivaArchivo = () => {
         cargarCargas,
         cargarDetalle,
         cargarDetalleErrorDocumento,
+        preflightOperacion,
+        cargarEstadoOperacion,
+        cargarAuditoria,
+        qaSaia,
+        ejecutarLimpieza,
         crearCarga,
+        previewCarga,
         procesarCarga,
         reintentarFallidos,
         pararCarga,
