@@ -58,6 +58,12 @@ const useMigracionMasivaArchivo = () => {
         return res.data;
     }, []);
 
+    const cargarDetalleErrorDocumento = useCallback(async (docId, fase = '') => {
+        const params = fase ? { fase } : undefined;
+        const res = await api.get(`migracion-masiva/documentos/${docId}/detalle-error/`, { params });
+        return res.data;
+    }, []);
+
     const iniciarPolling = useCallback((id) => {
         detenerPolling();
         pollingRef.current = setInterval(async () => {
@@ -78,8 +84,14 @@ const useMigracionMasivaArchivo = () => {
         const formData = new FormData();
         formData.append('nombre', nombre);
         if (descripcion) formData.append('descripcion', descripcion);
-        archivos.forEach(archivo => formData.append('archivos', archivo));
-        (archivosSecundarios || []).forEach(archivo => formData.append('archivos_secundarios', archivo));
+        archivos.forEach((archivo) => {
+            formData.append('archivos', archivo);
+            formData.append('rutas', archivo.webkitRelativePath || archivo.name);
+        });
+        (archivosSecundarios || []).forEach((archivo) => {
+            formData.append('archivos_secundarios', archivo);
+            formData.append('rutas_secundarias', archivo.webkitRelativePath || archivo.name);
+        });
         try {
             const res = await api.post('migracion-masiva-archivo/cargas/', formData, {
                 // No fijar Content-Type manualmente: axios/el navegador deben generar
@@ -219,6 +231,7 @@ const useMigracionMasivaArchivo = () => {
         config,
         cargarCargas,
         cargarDetalle,
+        cargarDetalleErrorDocumento,
         crearCarga,
         procesarCarga,
         reintentarFallidos,

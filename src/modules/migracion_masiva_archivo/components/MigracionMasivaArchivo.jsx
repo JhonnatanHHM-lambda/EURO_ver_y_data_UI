@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    FiCheck, FiDownload, FiInfo, FiPlay, FiRotateCcw, FiSend, FiSquare, FiUpload,
+    FiCheck, FiChevronRight, FiDownload, FiInfo, FiPlay, FiRotateCcw, FiSend, FiSquare, FiUpload,
 } from 'react-icons/fi';
 import useMigracionMasivaArchivo from '../hooks/useMigracionMasivaArchivo';
 import Modal from '../../core/Modal/components/Modal';
@@ -48,6 +48,14 @@ const FASES_DEF = [
     { label: 'F5 · Carga SAIA',     inicio: 'fase5_inicio', fin: 'fase5_fin', omitida: 'fase5_omitida' },
 ];
 
+const PHASE_COLUMNS = [
+    { key: 'f1', fallbackIndex: 0 },
+    { key: 'f2', fallbackIndex: 1 },
+    { key: 'f3', fallbackIndex: 2 },
+    { key: 'f4', fallbackIndex: 3 },
+    { key: 'saia', fallbackIndex: 4 },
+];
+
 const ETIQUETA_FASE = {
     completado: 'Completado',
     en_proceso: 'En proceso',
@@ -79,15 +87,56 @@ const calcularFases = (logs, hayCarga) => {
     });
 };
 
-const FaseBadge = ({ value, fecha }) => {
+const FaseBadge = ({ value, fecha, detail, onClick }) => {
     if (!value || value === '-') return <span className="mma-phase muted">—</span>;
     const label = value === 'EN_COLA' ? 'En cola' : value === 'EN_PROCESO' ? 'En proceso' : value;
+    const clickable = typeof onClick === 'function';
     return (
-        <span className={`mma-phase ${value.toLowerCase().replaceAll('_', '-')}`}>
+        <span
+            className={`mma-phase ${value.toLowerCase().replaceAll('_', '-')} ${clickable ? 'clickable' : ''}`}
+            role={clickable ? 'button' : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            title={detail?.tooltip || detail?.mensaje_usuario || ''}
+            onClick={onClick}
+            onKeyDown={clickable ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onClick(event);
+                }
+            } : undefined}
+        >
             {label}
             {fecha && value === 'OK' && <small>{fmtFecha(fecha)}</small>}
         </span>
     );
+};
+
+const faseValor = (estadoBackend, fallback) => {
+    if (!estadoBackend) return fallback;
+    if (estadoBackend === 'ok') return 'OK';
+    if (estadoBackend === 'error') return 'ERROR';
+    if (estadoBackend === 'pendiente') return 'EN_COLA';
+    if (estadoBackend === 'na') return '-';
+    return fallback;
+};
+
+const resolverIndiceFaseActiva = (carga, fases) => {
+    if (!carga || !['PENDIENTE', 'EN_PROCESO'].includes(carga.estado_proceso)) return -1;
+    const faseActual = String(carga.fase_actual || '').toLowerCase();
+    if (faseActual.includes('fase_1') || faseActual.includes('fase1') || faseActual.includes('inventario')) return 0;
+    if (faseActual.includes('fase_2') || faseActual.includes('fase2') || faseActual.includes('metadata') || faseActual.includes('ocr')) return 1;
+    if (faseActual.includes('fase_3') || faseActual.includes('fase3') || faseActual.includes('relacion')) return 2;
+    if (faseActual.includes('fase_4') || faseActual.includes('fase4') || faseActual.includes('validacion')) return 3;
+    if (faseActual.includes('fase_5') || faseActual.includes('fase5') || faseActual.includes('saia')) return 4;
+    const enProceso = fases.findIndex(fase => fase.estado === 'en_proceso');
+    if (enProceso >= 0) return enProceso;
+    return fases.findIndex(fase => fase.estado === 'pendiente');
+};
+
+const valorCampo = (value) => {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
 };
 
 const intentoExitoso = (doc) => (doc?.resultado?.intentos_saia || []).find(i => i.exitoso);
@@ -101,6 +150,7 @@ const MigracionMasivaArchivo = () => {
     const [archivos, setArchivos] = useState([]);
     const [tab, setTab] = useState('documentos');
     const [detalleDoc, setDetalleDoc] = useState(null);
+    const [detalleFase, setDetalleFase] = useState(null);
 
     const {
         cargas,
@@ -108,6 +158,7 @@ const MigracionMasivaArchivo = () => {
         procesando,
         config,
         crearCarga,
+        cargarDetalleErrorDocumento,
         procesarCarga,
         reintentarFallidos,
         pararCarga,
@@ -155,9 +206,37 @@ const MigracionMasivaArchivo = () => {
     }, [archivos.length, carga, documentos]);
 
     const fases = useMemo(() => calcularFases(logs, !!carga), [logs, carga]);
+    const faseActivaIndex = useMemo(() => resolverIndiceFaseActiva(carga, fases), [carga, fases]);
 
     const estadoUi = carga?.estado_proceso || (archivos.length ? 'PENDIENTE' : 'Inactivo');
     const estaActivo = ['PENDIENTE', 'EN_PROCESO'].includes(carga?.estado_proceso) || procesando;
+
+    const abrirDetalleFase = async (doc, phaseKey, event) => {
+        event?.stopPropagation();
+        if (!doc?.id || String(doc.id).startsWith('local-')) return;
+        const fallbackPhase = doc.fases_detalle?.[phaseKey] || null;
+        setDetalleFase({ doc, phaseKey, phase: fallbackPhase, loading: true });
+        try {
+            const data = await cargarDetalleErrorDocumento(doc.id, phaseKey);
+            const diagnostico = data?.diagnostico || {};
+            const phase = diagnostico.fases_detalle?.[phaseKey] || fallbackPhase;
+            setDetalleFase({
+                doc: data?.documento || doc,
+                phaseKey,
+                phase,
+                diagnostico,
+                loading: false,
+            });
+        } catch (error) {
+            setDetalleFase({
+                doc,
+                phaseKey,
+                phase: fallbackPhase,
+                error: 'No fue posible consultar el detalle enriquecido del error.',
+                loading: false,
+            });
+        }
+    };
 
     const handleSeleccionArchivos = (event) => {
         const seleccionados = Array.from(event.target.files || []);
@@ -309,9 +388,12 @@ const MigracionMasivaArchivo = () => {
             </div>
 
             <div className="mma-phases">
-                {fases.map((fase) => (
-                    <div key={fase.label} className={`mma-progress ${fase.estado}`}>
-                        <div>{fase.label}</div>
+                {fases.map((fase, index) => (
+                    <div key={fase.label} className={`mma-progress ${fase.estado} ${faseActivaIndex === index ? 'actual' : ''}`}>
+                        <div>
+                            {faseActivaIndex === index && <FiChevronRight className="mma-progress-arrow" size={16} />}
+                            {fase.label}
+                        </div>
                         <span><i style={{ width: `${fase.pct}%` }} /></span>
                         <small>{ETIQUETA_FASE[fase.estado]}</small>
                     </div>
@@ -454,15 +536,20 @@ const MigracionMasivaArchivo = () => {
                                     estado_proceso: 'PENDIENTE',
                                     creado: null,
                                 }))).map(doc => {
-                                    const [f1, f2, f3, f4, saia, estado] = faseDesdeEstado(doc.estado_proceso);
+                                    const fallback = faseDesdeEstado(doc.estado_proceso);
+                                    const valoresFase = PHASE_COLUMNS.reduce((acc, column) => ({
+                                        ...acc,
+                                        [column.key]: faseValor(doc.fases?.[column.key], fallback[column.fallbackIndex]),
+                                    }), {});
+                                    const estado = fallback[5];
                                     return (
                                         <tr key={doc.id} onClick={() => documentos.length && setDetalleDoc(doc)} style={{ cursor: documentos.length ? 'pointer' : 'default' }}>
                                             <td>{doc.nombre_original}</td>
-                                            <td><FaseBadge value={f1} /></td>
-                                            <td><FaseBadge value={f2} /></td>
-                                            <td><FaseBadge value={f3} /></td>
-                                            <td><FaseBadge value={f4} /></td>
-                                            <td><FaseBadge value={saia} fecha={doc.modificado || doc.creado} /></td>
+                                            <td><FaseBadge value={valoresFase.f1} detail={doc.fases_detalle?.f1} onClick={(event) => abrirDetalleFase(doc, 'f1', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f2} detail={doc.fases_detalle?.f2} onClick={(event) => abrirDetalleFase(doc, 'f2', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f3} detail={doc.fases_detalle?.f3} onClick={(event) => abrirDetalleFase(doc, 'f3', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f4} detail={doc.fases_detalle?.f4} onClick={(event) => abrirDetalleFase(doc, 'f4', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.saia} detail={doc.fases_detalle?.saia} fecha={doc.modificado || doc.creado} onClick={(event) => abrirDetalleFase(doc, 'saia', event)} /></td>
                                             <td><span className={badgeClass(doc.estado_proceso)}>{estado}</span></td>
                                         </tr>
                                     );
@@ -477,6 +564,81 @@ const MigracionMasivaArchivo = () => {
                     </div>
                 )}
             </div>
+
+            <Modal
+                isOpen={!!detalleFase}
+                onClose={() => setDetalleFase(null)}
+                title={`${detalleFase?.doc?.nombre_original || detalleFase?.doc?.nombre_archivo || 'Documento'} - ${detalleFase?.phase?.fase_corta || 'Fase'}`}
+                size="md"
+            >
+                {detalleFase && (
+                    <div className="mma-detail mma-phase-detail">
+                        {detalleFase.loading && <p>Consultando detalle de la fase...</p>}
+                        {detalleFase.error && <p className="mma-error-text">{detalleFase.error}</p>}
+                        {detalleFase.phase && (
+                            <>
+                                <div className="mma-detail-head">
+                                    <span className={`mma-phase ${String(detalleFase.phase.estado || '').replaceAll('_', '-')}`}>
+                                        {detalleFase.phase.label || detalleFase.phase.estado}
+                                    </span>
+                                    {detalleFase.phase.severidad && <span className="mma-detail-severity">{detalleFase.phase.severidad}</span>}
+                                    {detalleFase.phase.codigo_error_usuario && <code>{detalleFase.phase.codigo_error_usuario}</code>}
+                                </div>
+                                <p><strong>Fase:</strong> {detalleFase.phase.titulo || detalleFase.phase.fase_corta}</p>
+                                {detalleFase.phase.mensaje_usuario && (
+                                    <p><strong>Error detectado:</strong> {detalleFase.phase.mensaje_usuario}</p>
+                                )}
+                                {detalleFase.phase.accion_sugerida && (
+                                    <p><strong>Acción sugerida:</strong> {detalleFase.phase.accion_sugerida}</p>
+                                )}
+                                {detalleFase.phase.error_tecnico && (
+                                    <p><strong>Error técnico:</strong> {detalleFase.phase.error_tecnico}</p>
+                                )}
+                                {detalleFase.diagnostico?.ultimo_intento_saia && (
+                                    <>
+                                        <p><strong>Último intento SAIA</strong></p>
+                                        <ul>
+                                            <li>Estado: {detalleFase.diagnostico.ultimo_intento_saia.exitoso ? 'Exitoso' : 'Fallido'}</li>
+                                            <li>Status: {valorCampo(detalleFase.diagnostico.ultimo_intento_saia.status_code)}</li>
+                                            <li>Documento SAIA: {valorCampo(detalleFase.diagnostico.ultimo_intento_saia.id_documento_saia)}</li>
+                                            <li>Mensaje: {valorCampo(detalleFase.diagnostico.ultimo_intento_saia.mensaje_error)}</li>
+                                        </ul>
+                                    </>
+                                )}
+                                {(detalleFase.phase.logs || []).length > 0 && (
+                                    <>
+                                        <p><strong>Logs de la fase</strong></p>
+                                        <div className="mma-phase-logs">
+                                            {detalleFase.phase.logs.map((log, index) => (
+                                                <div key={`${log.evento}-${index}`} className={`mma-log ${log.nivel?.toLowerCase()}`}>
+                                                    <span>{fmtFecha(log.creado)}</span>
+                                                    <strong>{log.evento}</strong>
+                                                    <p>{log.mensaje}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                                {detalleFase.diagnostico?.contexto_tecnico && (
+                                    <details className="mma-technical-context">
+                                        <summary>Contexto técnico</summary>
+                                        <dl>
+                                            {Object.entries(detalleFase.diagnostico.contexto_tecnico)
+                                                .filter(([, value]) => value !== '' && value !== null && value !== undefined)
+                                                .map(([key, value]) => (
+                                                    <div key={key}>
+                                                        <dt>{key}</dt>
+                                                        <dd>{valorCampo(value)}</dd>
+                                                    </div>
+                                                ))}
+                                        </dl>
+                                    </details>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
+            </Modal>
 
             <Modal isOpen={!!detalleDoc} onClose={() => setDetalleDoc(null)} title={detalleDoc?.nombre_original || 'Detalle'} size="md">
                 {detalleDoc && (
