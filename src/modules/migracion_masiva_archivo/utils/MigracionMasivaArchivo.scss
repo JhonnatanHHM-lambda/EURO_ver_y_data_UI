@@ -768,6 +768,92 @@
     overflow-wrap: anywhere;
 }
 
+.mma-global-panel {
+    display: grid;
+    gap: 10px;
+}
+
+.mma-filter-grid,
+.mma-qa-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    align-items: end;
+    padding: 10px;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.mma-filter-grid label,
+.mma-qa-grid label {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.mma-filter-grid span,
+.mma-qa-grid span {
+    color: var(--fg3);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.mma-filter-grid input,
+.mma-qa-grid input {
+    width: 100%;
+    height: 32px;
+    border: 1px solid var(--divider);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--fg1);
+    padding: 0 8px;
+    font-size: 12px;
+}
+
+.mma-global-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mma-inline-details {
+    margin-top: 4px;
+    color: var(--fg2);
+}
+
+.mma-inline-details summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-weight: 800;
+}
+
+.mma-inline-details pre,
+.mma-qa-result pre {
+    max-height: 320px;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--fg2);
+    padding: 10px;
+    font-size: 11px;
+}
+
+.mma-qa-result {
+    min-width: 0;
+}
+
+.mma-doc-table td .mma-btn {
+    height: 26px;
+    padding: 0 8px;
+    margin: 2px 4px 2px 0;
+    font-size: 11px;
+}
+
 @media (max-width: 1200px) {
     .mma-cards,
     .mma-phases {

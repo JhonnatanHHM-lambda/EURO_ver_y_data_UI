@@ -92,6 +92,31 @@ const useMigracionMasivaArchivo = () => {
         return res.data;
     }, []);
 
+    const cargarHistorialGlobal = useCallback(async (params = {}) => {
+        const res = await api.get('migracion-masiva/historial-saia/', { params });
+        return res.data;
+    }, []);
+
+    const cargarManualesGlobal = useCallback(async (params = {}) => {
+        const res = await api.get('migracion-masiva/manuales/', { params });
+        return res.data;
+    }, []);
+
+    const marcarRevisadoGlobal = useCallback(async (docId) => {
+        const res = await api.post(`migracion-masiva/manuales/${docId}/revisado/`);
+        return res.data;
+    }, []);
+
+    const marcarOkGlobal = useCallback(async (docId) => {
+        const res = await api.post(`migracion-masiva/manuales/${docId}/marcar-ok/`);
+        return res.data;
+    }, []);
+
+    const reintentarFallidosGlobal = useCallback(async (payload = {}) => {
+        const res = await api.post('migracion-masiva/reintentar-fallidos/', payload);
+        return res.data;
+    }, []);
+
     const iniciarPolling = useCallback((id) => {
         detenerPolling();
         pollingRef.current = setInterval(async () => {
@@ -281,6 +306,11 @@ const useMigracionMasivaArchivo = () => {
         cargarAuditoria,
         qaSaia,
         ejecutarLimpieza,
+        cargarHistorialGlobal,
+        cargarManualesGlobal,
+        marcarRevisadoGlobal,
+        marcarOkGlobal,
+        reintentarFallidosGlobal,
         crearCarga,
         previewCarga,
         procesarCarga,

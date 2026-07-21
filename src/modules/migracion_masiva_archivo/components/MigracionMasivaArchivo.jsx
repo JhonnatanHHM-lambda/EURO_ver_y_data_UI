@@ -159,6 +159,14 @@ const MigracionMasivaArchivo = () => {
     const [headful, setHeadful] = useState(false);
     const [tamanoSublote, setTamanoSublote] = useState(10);
     const [pausaEntre, setPausaEntre] = useState(3);
+    const [auditoria, setAuditoria] = useState(null);
+    const [auditFilters, setAuditFilters] = useState({ lote_id: '', documento_id: '', fase: '', evento: '', nivel: '', desde: '', hasta: '' });
+    const [historialGlobal, setHistorialGlobal] = useState(null);
+    const [manualesGlobal, setManualesGlobal] = useState(null);
+    const [qaDocumentoId, setQaDocumentoId] = useState('');
+    const [qaRouteCode, setQaRouteCode] = useState('');
+    const [qaResultado, setQaResultado] = useState(null);
+    const [qaLoading, setQaLoading] = useState(false);
 
     const {
         cargas,
@@ -170,8 +178,14 @@ const MigracionMasivaArchivo = () => {
         cargarDetalleErrorDocumento,
         preflightOperacion,
         cargarEstadoOperacion,
+        cargarAuditoria,
         qaSaia,
         ejecutarLimpieza,
+        cargarHistorialGlobal,
+        cargarManualesGlobal,
+        marcarRevisadoGlobal,
+        marcarOkGlobal,
+        reintentarFallidosGlobal,
         procesarCarga,
         reintentarFallidos,
         pararCarga,
@@ -337,6 +351,87 @@ const MigracionMasivaArchivo = () => {
             swal({ title: 'Dry-run encolado', icon: 'success', text: `Task: ${data.task_id}` });
         } catch (error) {
             swal({ title: 'No fue posible encolar dry-run', icon: 'error', text: error?.response?.data?.error || 'Documento no elegible para prueba SAIA.' });
+        }
+    };
+
+    const cargarAuditoriaVista = useCallback(async () => {
+        const data = await cargarAuditoria(Object.fromEntries(
+            Object.entries(auditFilters).filter(([, value]) => value !== ''),
+        ));
+        setAuditoria(data);
+    }, [auditFilters, cargarAuditoria]);
+
+    const cargarHistorialVista = useCallback(async () => {
+        const data = await cargarHistorialGlobal({ page_size: 100 });
+        setHistorialGlobal(data);
+    }, [cargarHistorialGlobal]);
+
+    const cargarManualesVista = useCallback(async () => {
+        const data = await cargarManualesGlobal({ page_size: 100 });
+        setManualesGlobal(data);
+    }, [cargarManualesGlobal]);
+
+    useEffect(() => {
+        if (tab === 'auditoria') cargarAuditoriaVista().catch(() => setAuditoria(null));
+        if (tab === 'historial-global') cargarHistorialVista().catch(() => setHistorialGlobal(null));
+        if (tab === 'manuales-global') cargarManualesVista().catch(() => setManualesGlobal(null));
+    }, [tab, cargarAuditoriaVista, cargarHistorialVista, cargarManualesVista]);
+
+    const exportarAuditoria = () => {
+        if (!auditoria) return;
+        const blob = new Blob([JSON.stringify(auditoria, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auditoria_migracion_saia_${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    };
+
+    const handleManualGlobal = async (docId, accion) => {
+        try {
+            if (accion === 'ok') await marcarOkGlobal(docId);
+            else await marcarRevisadoGlobal(docId);
+            await cargarManualesVista();
+            swal({ title: 'Documento actualizado', icon: 'success' });
+        } catch (error) {
+            swal({ title: 'No fue posible actualizar el documento', icon: 'error', text: error?.response?.data?.error || 'Revisa permisos o estado del documento.' });
+        }
+    };
+
+    const handleReintentarGlobal = async () => {
+        try {
+            const data = await reintentarFallidosGlobal({ dry_run: true });
+            swal({ title: 'Reintento global dry-run', icon: 'info', text: JSON.stringify(data.totales || data) });
+            await cargarManualesVista();
+        } catch (error) {
+            swal({ title: 'No fue posible reintentar fallidos', icon: 'error', text: error?.response?.data?.error || 'Revisa el estado de los documentos.' });
+        }
+    };
+
+    const ejecutarQa = async (accion) => {
+        setQaLoading(true);
+        setQaResultado(null);
+        try {
+            const payload = {
+                accion,
+                documento_id: qaDocumentoId || undefined,
+                route_code: qaRouteCode || undefined,
+                headful,
+                destinatario: correoDestino,
+            };
+            if (accion === 'diagnostico_profundo') {
+                payload.confirmar_carga = false;
+                payload.adjuntar_en_dry_run = false;
+            }
+            const data = await qaSaia(payload);
+            setQaResultado(data);
+        } catch (error) {
+            setQaResultado(error?.response?.data || { error: error?.message || 'Error QA' });
+        } finally {
+            setQaLoading(false);
         }
     };
 
@@ -570,6 +665,18 @@ const MigracionMasivaArchivo = () => {
                     <button className={tab === 'logs' ? 'on' : ''} onClick={() => setTab('logs')}>
                         Logs de ejecución
                     </button>
+                    <button className={tab === 'auditoria' ? 'on' : ''} onClick={() => setTab('auditoria')}>
+                        Auditoria global
+                    </button>
+                    <button className={tab === 'manuales-global' ? 'on' : ''} onClick={() => setTab('manuales-global')}>
+                        Manuales global
+                    </button>
+                    <button className={tab === 'historial-global' ? 'on' : ''} onClick={() => setTab('historial-global')}>
+                        Historial global
+                    </button>
+                    <button className={tab === 'qa-saia' ? 'on' : ''} onClick={() => setTab('qa-saia')}>
+                        QA SAIA
+                    </button>
                     {carga && (
                         <div className="mma-download-tab">
                             <button className="mma-tab-action" onClick={() => descargarReporte(carga.id)}>
@@ -592,6 +699,169 @@ const MigracionMasivaArchivo = () => {
                             </div>
                         ))}
                         {!logs.length && <div className="mma-empty">Sin logs todavía.</div>}
+                    </div>
+                )}
+
+                {tab === 'auditoria' && (
+                    <div className="mma-global-panel">
+                        <div className="mma-filter-grid">
+                            {['lote_id', 'documento_id', 'fase', 'evento', 'nivel', 'desde', 'hasta'].map(key => (
+                                <label key={key}>
+                                    <span>{key}</span>
+                                    <input
+                                        value={auditFilters[key]}
+                                        onChange={event => setAuditFilters(prev => ({ ...prev, [key]: event.target.value }))}
+                                        placeholder={key === 'fase' ? 'f1/f2/f3/f4/saia' : ''}
+                                    />
+                                </label>
+                            ))}
+                            <button className="mma-btn primary" onClick={cargarAuditoriaVista}>Filtrar</button>
+                            <button className="mma-btn light" onClick={exportarAuditoria} disabled={!auditoria}>Exportar JSON</button>
+                        </div>
+                        <div className="mma-table-wrap">
+                            <table className="mma-doc-table">
+                                <thead>
+                                    <tr>
+                                        <th>FECHA</th>
+                                        <th>NIVEL</th>
+                                        <th>FASE</th>
+                                        <th>EVENTO</th>
+                                        <th>LOTE / DOCUMENTO</th>
+                                        <th>MENSAJE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(auditoria?.timeline || []).map(log => (
+                                        <tr key={log.id}>
+                                            <td>{fmtFecha(log.creado)}</td>
+                                            <td><span className={badgeClass(log.nivel)}>{log.nivel}</span></td>
+                                            <td>{log.fase || '-'}</td>
+                                            <td>{log.evento}</td>
+                                            <td>#{log.lote_id || '-'} / #{log.documento_id || '-'}</td>
+                                            <td>
+                                                {log.mensaje}
+                                                {log.detalle && Object.keys(log.detalle).length > 0 && (
+                                                    <details className="mma-inline-details">
+                                                        <summary>Detalle</summary>
+                                                        <pre>{JSON.stringify(log.detalle, null, 2)}</pre>
+                                                    </details>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!(auditoria?.timeline || []).length && (
+                                        <tr><td colSpan={6} className="mma-empty">Sin registros de auditoria para los filtros actuales.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {tab === 'manuales-global' && (
+                    <div className="mma-global-panel">
+                        <div className="mma-global-actions">
+                            <button className="mma-btn light" onClick={cargarManualesVista}>Actualizar</button>
+                            <button className="mma-btn primary" onClick={handleReintentarGlobal} disabled={!puedeCargarSaia}>
+                                <FiRotateCcw size={13} /> Reintentar elegibles dry-run
+                            </button>
+                        </div>
+                        <div className="mma-table-wrap">
+                            <table className="mma-doc-table">
+                                <thead>
+                                    <tr>
+                                        <th>DOCUMENTO</th>
+                                        <th>ESTADO</th>
+                                        <th>ERROR</th>
+                                        <th>ACCION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(manualesGlobal?.results || []).map(doc => (
+                                        <tr key={doc.id}>
+                                            <td>{doc.nombre_archivo || doc.nombre_original}</td>
+                                            <td><span className={badgeClass(doc.estado_proceso)}>{doc.estado_proceso}</span></td>
+                                            <td>{doc.mensaje_error_usuario?.mensaje_usuario || doc.error || '-'}</td>
+                                            <td>
+                                                <button className="mma-btn light" onClick={() => setDetalleDoc(doc)}>
+                                                    <FiInfo size={12} /> Detalle
+                                                </button>
+                                                <button className="mma-btn primary" onClick={() => handleManualGlobal(doc.id, 'revisado')} disabled={!puedeCargarSaia}>
+                                                    Revisado
+                                                </button>
+                                                <button className="mma-btn primary" onClick={() => handleManualGlobal(doc.id, 'ok')} disabled={!puedeCargarSaia}>
+                                                    Marcar OK
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {!(manualesGlobal?.results || []).length && (
+                                        <tr><td colSpan={4} className="mma-empty">Sin documentos globales pendientes de revision.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {tab === 'historial-global' && (
+                    <div className="mma-global-panel">
+                        <div className="mma-global-actions">
+                            <button className="mma-btn light" onClick={cargarHistorialVista}>Actualizar</button>
+                        </div>
+                        <div className="mma-table-wrap">
+                            <table className="mma-doc-table">
+                                <thead>
+                                    <tr>
+                                        <th>FECHA</th>
+                                        <th>DOCUMENTO</th>
+                                        <th>ID SAIA</th>
+                                        <th>USUARIO</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(historialGlobal?.results || []).map((item, index) => (
+                                        <tr key={`${item.documento_id}-${item.numero_intento}-${index}`}>
+                                            <td>{fmtFecha(item.creado)}</td>
+                                            <td>{item.documento_nombre}</td>
+                                            <td>{item.id_documento_saia || '-'}</td>
+                                            <td>{item.usuario_saia || '-'}</td>
+                                            <td>{item.status_code || '-'}</td>
+                                        </tr>
+                                    ))}
+                                    {!(historialGlobal?.results || []).length && (
+                                        <tr><td colSpan={5} className="mma-empty">Sin historial SAIA global.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {tab === 'qa-saia' && (
+                    <div className="mma-global-panel">
+                        <div className="mma-qa-grid">
+                            <label>
+                                <span>documento_id</span>
+                                <input value={qaDocumentoId} onChange={event => setQaDocumentoId(event.target.value)} />
+                            </label>
+                            <label>
+                                <span>route_code</span>
+                                <input value={qaRouteCode} onChange={event => setQaRouteCode(event.target.value.toUpperCase())} placeholder="PEL, RFTE, SER..." />
+                            </label>
+                            <button className="mma-btn light" onClick={() => ejecutarQa('probar_login')} disabled={qaLoading}>Probar login/preflight</button>
+                            <button className="mma-btn light" onClick={() => ejecutarQa('diagnosticar_ruta')} disabled={qaLoading}>Diagnosticar ruta</button>
+                            <button className="mma-btn light" onClick={() => ejecutarQa('diagnostico_profundo')} disabled={qaLoading || !qaDocumentoId}>Navegacion dry-run</button>
+                            <button className="mma-btn primary" onClick={() => ejecutarQa('dry_run_documento')} disabled={qaLoading || !qaDocumentoId}>Dry-run documento</button>
+                            <button className="mma-btn light" onClick={() => ejecutarQa('probar_correo')} disabled={qaLoading || !correoDestino}>Probar correo</button>
+                        </div>
+                        {qaLoading && <div className="mma-empty">Ejecutando QA...</div>}
+                        {qaResultado && (
+                            <div className="mma-qa-result">
+                                <pre>{JSON.stringify(qaResultado, null, 2)}</pre>
+                            </div>
+                        )}
                     </div>
                 )}
 
