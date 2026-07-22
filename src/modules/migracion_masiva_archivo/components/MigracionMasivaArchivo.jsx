@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    FiCheck, FiChevronRight, FiDownload, FiInfo, FiPlay, FiRotateCcw, FiSend, FiSquare, FiUpload,
+    FiCheck, FiChevronRight, FiDownload, FiInfo, FiMaximize2, FiMinimize2, FiPlay,
+    FiRefreshCw, FiRotateCcw, FiSearch, FiSend, FiSquare, FiUpload,
 } from 'react-icons/fi';
 import useMigracionMasivaArchivo from '../hooks/useMigracionMasivaArchivo';
 import Modal from '../../core/Modal/components/Modal';
@@ -148,6 +149,7 @@ const valorCampo = (value) => {
 const intentoExitoso = (doc) => (doc?.resultado?.intentos_saia || []).find(i => i.exitoso);
 
 const MigracionMasivaArchivo = () => {
+    const rootRef = useRef(null);
     const fileInputRef = useRef(null);
     const [nombre, setNombre] = useState('PEL 2024');
     const [correoDestino, setCorreoDestino] = useState('');
@@ -174,6 +176,8 @@ const MigracionMasivaArchivo = () => {
     const [qaResultado, setQaResultado] = useState(null);
     const [qaLoading, setQaLoading] = useState(false);
     const [liveProgress, setLiveProgress] = useState(null);
+    const [filtroTexto, setFiltroTexto] = useState('');
+    const [fullscreen, setFullscreen] = useState(false);
 
     const {
         cargas,
@@ -233,6 +237,13 @@ const MigracionMasivaArchivo = () => {
         return primeraCarpeta || `${archivos.length} archivo(s) seleccionado(s)`;
     }, [archivos]);
 
+    const carpetaSeleccionada = useMemo(() => {
+        if (!archivos.length) return '';
+        const path = archivos[0]?.webkitRelativePath || archivos[0]?.name || '';
+        const carpeta = path.includes('/') ? path.split('/')[0] : '';
+        return carpeta || `${archivos.length} archivo(s)`;
+    }, [archivos]);
+
     const totales = useMemo(() => {
         const total = carga?.total_archivos ?? documentos.length ?? archivos.length;
         const cargados = carga?.exitosos ?? documentos.filter(d => d.estado_proceso === 'CARGADO_SAIA').length;
@@ -245,9 +256,33 @@ const MigracionMasivaArchivo = () => {
     const faseActivaIndex = useMemo(() => resolverIndiceFaseActiva(carga, fases), [carga, fases]);
     const livePhaseKey = normalizeLivePhase(liveProgress?.evento_actual?.detalle?.phase);
     const liveDocumentId = liveProgress?.documento_actual?.id;
+    const correoOrigen = preflight?.correo_origen || estadoOperacion?.correo_origen || config?.email_origen || '';
+    const servicios = preflight?.servicios || estadoOperacion?.servicios || {};
+    const serviciosOk = Object.values(servicios).filter(Boolean).every(item => item.ok !== false);
 
-    const estadoUi = carga?.estado_proceso || (archivos.length ? 'PENDIENTE' : 'Inactivo');
     const estaActivo = ['PENDIENTE', 'EN_PROCESO'].includes(carga?.estado_proceso) || procesando;
+    const estadoUi = estaActivo ? 'Activo' : (carga?.estado_proceso || (archivos.length ? 'PENDIENTE' : 'Detenido'));
+
+    const textoFiltro = filtroTexto.trim().toLowerCase();
+    const filtrarDoc = useCallback((doc) => {
+        if (!textoFiltro) return true;
+        return [
+            doc.nombre_original,
+            doc.nombre_archivo,
+            doc.estado_proceso,
+            doc.error,
+            doc.resultado?.mensaje_analista,
+        ].filter(Boolean).some(value => String(value).toLowerCase().includes(textoFiltro));
+    }, [textoFiltro]);
+    const documentosFiltrados = useMemo(() => documentos.filter(filtrarDoc), [documentos, filtrarDoc]);
+    const documentosPendientesRevision = useMemo(
+        () => documentos.filter(d => ESTADOS_REVISABLES.includes(d.estado_proceso)).filter(filtrarDoc),
+        [documentos, filtrarDoc],
+    );
+    const documentosCargados = useMemo(
+        () => documentos.filter(d => d.estado_proceso === 'CARGADO_SAIA').filter(filtrarDoc),
+        [documentos, filtrarDoc],
+    );
 
     useEffect(() => {
         if (!carga?.id) {
@@ -378,6 +413,15 @@ const MigracionMasivaArchivo = () => {
         }
     };
 
+    const handleLimpiezaMigracionDryRun = async () => {
+        try {
+            const data = await ejecutarLimpieza({ tipo: 'migration_data', dry_run: true, lote_id: carga?.id, include_minio: true });
+            swal({ title: 'Dry-run datos migracion', icon: 'info', text: JSON.stringify(data.resultados?.migration_data?.encontrados || data.resultados) });
+        } catch (error) {
+            swal({ title: 'No fue posible probar limpieza de migracion', icon: 'error', text: error?.response?.data?.error || 'Revisa MinIO y el lote activo.' });
+        }
+    };
+
     const handleDryRunDoc = async () => {
         if (!detalleFase?.doc?.id) return;
         try {
@@ -410,6 +454,12 @@ const MigracionMasivaArchivo = () => {
         if (tab === 'historial-global') cargarHistorialVista().catch(() => setHistorialGlobal(null));
         if (tab === 'manuales-global') cargarManualesVista().catch(() => setManualesGlobal(null));
     }, [tab, cargarAuditoriaVista, cargarHistorialVista, cargarManualesVista]);
+
+    useEffect(() => {
+        const onChange = () => setFullscreen(document.fullscreenElement === rootRef.current);
+        document.addEventListener('fullscreenchange', onChange);
+        return () => document.removeEventListener('fullscreenchange', onChange);
+    }, []);
 
     const exportarAuditoria = () => {
         if (!auditoria) return;
@@ -491,13 +541,28 @@ const MigracionMasivaArchivo = () => {
         await reenviarReporte(carga.id, [destino]);
     };
 
+    const toggleFullscreen = async () => {
+        try {
+            if (!document.fullscreenElement && rootRef.current?.requestFullscreen) {
+                await rootRef.current.requestFullscreen();
+                setFullscreen(true);
+                return;
+            }
+            if (document.fullscreenElement && document.exitFullscreen) {
+                await document.exitFullscreen();
+                setFullscreen(false);
+                return;
+            }
+        } catch {
+            // El modo CSS mantiene la vista ampliada si el navegador bloquea fullscreen.
+        }
+        setFullscreen(prev => !prev);
+    };
+
     // Mismo criterio que _ESTADOS_RETROCEDIBLES en el backend: un documento en
     // ERROR_SAIA también se revisa/reintenta manualmente, no solo REQUIERE_REVISION.
-    const documentosPendientesRevision = documentos.filter(d => ESTADOS_REVISABLES.includes(d.estado_proceso));
-    const documentosCargados = documentos.filter(d => d.estado_proceso === 'CARGADO_SAIA');
-
     return (
-        <div className="vyd-main fade-in mma-desktop">
+        <div ref={rootRef} className={`vyd-main fade-in mma-desktop ${fullscreen ? 'mma-fullscreen' : ''}`}>
             <div className="vyd-page-header">
                 <div>
                     <h1 className="vyd-page-title">
@@ -510,7 +575,14 @@ const MigracionMasivaArchivo = () => {
             </div>
 
             <div className="mma-toolbar">
-                <label>Carpeta</label>
+                <label>Carpeta:</label>
+                <input
+                    className="mma-carpeta"
+                    value={carpetaSeleccionada}
+                    placeholder="Selecciona una carpeta"
+                    readOnly
+                    title={carpetaSeleccionada || 'Selecciona una carpeta desde el navegador'}
+                />
                 <button className="mma-btn light" onClick={() => fileInputRef.current?.click()}>
                     Explorar
                 </button>
@@ -564,8 +636,21 @@ const MigracionMasivaArchivo = () => {
 
                 <div className="mma-toolbar-spacer" />
 
+                <label className="mma-search" title="Buscar por archivo, estado o error">
+                    <FiSearch size={14} />
+                    <input value={filtroTexto} onChange={e => setFiltroTexto(e.target.value)} placeholder="Buscar" />
+                </label>
+                <button className={`mma-health ${serviciosOk ? 'ok' : 'warn'}`} onClick={handlePreflightManual} title="Validar API, Celery, MinIO, Chromium, SAIA y correo">
+                    API {serviciosOk ? 'OK' : '!'}
+                </button>
                 <button className="mma-btn light" onClick={handlePreflightManual} disabled={procesando}>
                     <FiInfo size={14} /> Preflight
+                </button>
+                <button className="mma-btn light icon" onClick={refrescarEstadoOperacion} title="Actualizar estado operativo">
+                    <FiRefreshCw size={14} />
+                </button>
+                <button className="mma-btn light icon" onClick={toggleFullscreen} title={fullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}>
+                    {fullscreen ? <FiMinimize2 size={14} /> : <FiMaximize2 size={14} />}
                 </button>
                 <button className="mma-btn primary" onClick={handleIniciar} disabled={estaActivo}>
                     <FiPlay size={14} /> INICIAR
@@ -576,7 +661,8 @@ const MigracionMasivaArchivo = () => {
             </div>
 
             <div className="mma-from">
-                Envía desde: <span>{correoDestino || '—'}</span>
+                <span className="mma-from-primary">Envia desde: {correoOrigen || '-'}</span>
+                {correoDestino && <span> · Destino: {correoDestino}</span>}
                 {seleccionResumen && <strong> · {seleccionResumen}</strong>}
             </div>
 
@@ -600,6 +686,32 @@ const MigracionMasivaArchivo = () => {
                                 {(previewOperativo.bloqueos_fase1 || []).slice(0, 4).map((item, index) => (
                                     <p key={`${item.ruta_archivo}-${index}`} className="mma-op-warning">{item.codigo}: {item.nombre_archivo} - {item.mensaje}</p>
                                 ))}
+                                <div className="mma-preview-details">
+                                    <details>
+                                        <summary>PDFs detectados ({previewOperativo.totales?.pdf ?? 0})</summary>
+                                        {(previewOperativo.documentos || []).filter(item => item.es_pdf).slice(0, 80).map((item, index) => (
+                                            <p key={`pdf-${item.ruta_archivo}-${index}`}>{item.nombre_archivo} <small>{item.route_code || 'SIN_RUTA'}</small></p>
+                                        ))}
+                                    </details>
+                                    <details>
+                                        <summary>Omitidos/no-PDF ({previewOperativo.totales?.no_pdf ?? 0})</summary>
+                                        {(previewOperativo.omitidos_no_pdf || []).slice(0, 80).map((item, index) => (
+                                            <p key={`omitido-${item.ruta_archivo}-${index}`}>{item.nombre_archivo} <small>{item.extension || '-'}</small></p>
+                                        ))}
+                                    </details>
+                                    <details>
+                                        <summary>Rutas no reconocidas ({previewOperativo.totales?.rutas_no_reconocidas ?? 0})</summary>
+                                        {(previewOperativo.rutas_no_reconocidas || []).slice(0, 80).map((item, index) => (
+                                            <p key={`sin-ruta-${item.ruta_archivo}-${index}`}>{item.ruta_archivo}</p>
+                                        ))}
+                                    </details>
+                                    <details>
+                                        <summary>Duplicados probables ({previewOperativo.totales?.duplicados_probables ?? 0})</summary>
+                                        {(previewOperativo.duplicados_probables || []).slice(0, 40).map((item, index) => (
+                                            <p key={`dup-${item.valor}-${index}`}>{item.criterio}: {item.documentos?.map(doc => doc.nombre_archivo).join(', ')}</p>
+                                        ))}
+                                    </details>
+                                </div>
                                 {(previewOperativo.lotes_reutilizables || []).length > 0 && (
                                     <p className="mma-op-info">Lotes reutilizables: {previewOperativo.lotes_reutilizables.map(l => `#${l.lote_id}`).join(', ')}</p>
                                 )}
@@ -616,11 +728,21 @@ const MigracionMasivaArchivo = () => {
                         <p>Proceso activo: <b>{estadoOperacion?.proceso_activo ? 'Si' : 'No'}</b></p>
                         <p>Lote activo: <b>{estadoOperacion?.lote_activo?.nombre || 'Ninguno'}</b></p>
                         <p>Fase actual: <b>{estadoOperacion?.fase_actual || 'Sin fase activa'}</b></p>
+                        {Object.keys(servicios || {}).length > 0 && (
+                            <div className="mma-service-row">
+                                {Object.entries(servicios).map(([key, item]) => (
+                                    <span key={key} className={item.ok !== false ? 'ok' : 'warn'} title={item.mensaje || item.titulo}>
+                                        {item.titulo || key}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                         {estadoOperacion?.ultimo_error && (
                             <p className="mma-op-warning">{estadoOperacion.ultimo_error.evento}: {estadoOperacion.ultimo_error.mensaje}</p>
                         )}
                         <div className="mma-op-actions">
                             <button className="mma-btn light" onClick={handleLimpiezaDryRun}>Dry-run limpieza</button>
+                            <button className="mma-btn light" onClick={handleLimpiezaMigracionDryRun}>Dry-run datos migracion</button>
                         </div>
                     </div>
                     {preflight && (
@@ -667,6 +789,8 @@ const MigracionMasivaArchivo = () => {
                 </div>
                 <div className="mma-card status">
                     <span><i className={estaActivo ? 'active' : ''} /> {estadoUi?.replaceAll('_', ' ')}</span>
+                    <small className="mma-status-live">{liveProgress?.fase_actual || estadoOperacion?.fase_actual || carga?.fase_actual || carga?.nombre || '-'}</small>
+                    <small className="mma-status-live">{liveProgress?.documento_actual?.nombre_archivo || carga?.nombre || '-'}</small>
                     <small>{carga?.nombre || '—'}</small>
                     <small>{carga ? fmtFecha(carga.creado) : '—'}</small>
                 </div>
@@ -999,7 +1123,7 @@ const MigracionMasivaArchivo = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {(documentos.length ? documentos : archivos.map((archivo, idx) => ({
+                                {(documentos.length ? documentosFiltrados : archivos.map((archivo, idx) => ({
                                     id: `local-${idx}`,
                                     nombre_original: archivo.name,
                                     estado_proceso: 'PENDIENTE',
@@ -1029,6 +1153,11 @@ const MigracionMasivaArchivo = () => {
                                         </tr>
                                     );
                                 })}
+                                {documentos.length > 0 && !documentosFiltrados.length && (
+                                    <tr>
+                                        <td colSpan={7} className="mma-empty">Sin documentos para la busqueda actual.</td>
+                                    </tr>
+                                )}
                                 {!documentos.length && !archivos.length && (
                                     <tr>
                                         <td colSpan={7} className="mma-empty">Selecciona una carpeta o carga archivos para iniciar.</td>
