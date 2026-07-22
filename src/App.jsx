@@ -124,6 +124,12 @@ function App() {
                                 <MigracionMasivaArchivo />
                             </TienePermiso>
                         } />
+
+                        <Route path="/app/migracion-masiva" element={
+                            <TienePermiso permiso="can_view_migracion_masiva_archivo">
+                                <MigracionMasivaArchivo />
+                            </TienePermiso>
+                        } />
                     </Route>
                 </Route>
             </Routes>

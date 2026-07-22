@@ -82,6 +82,11 @@ const useMigracionMasivaArchivo = () => {
         return res.data;
     }, []);
 
+    const cargarProgresoLote = useCallback(async (loteId) => {
+        const res = await api.get(`migracion-masiva/operacion/lotes/${loteId}/progreso/`);
+        return res.data;
+    }, []);
+
     const qaSaia = useCallback(async (payload = {}) => {
         const res = await api.post('migracion-masiva/operacion/qa-saia/', payload);
         return res.data;
@@ -130,7 +135,7 @@ const useMigracionMasivaArchivo = () => {
                 detenerPolling();
                 setProcesando(false);
             }
-        }, 4000);
+        }, 2500);
     }, [cargarDetalle, detenerPolling]);
 
     const crearCarga = useCallback(async ({ nombre, descripcion, archivos, archivosSecundarios }) => {
@@ -304,6 +309,7 @@ const useMigracionMasivaArchivo = () => {
         preflightOperacion,
         cargarEstadoOperacion,
         cargarAuditoria,
+        cargarProgresoLote,
         qaSaia,
         ejecutarLimpieza,
         cargarHistorialGlobal,

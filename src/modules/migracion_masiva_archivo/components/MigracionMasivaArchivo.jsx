@@ -56,6 +56,11 @@ const PHASE_COLUMNS = [
     { key: 'saia', fallbackIndex: 4 },
 ];
 
+const normalizeLivePhase = (phase) => {
+    if (phase === 'f5') return 'saia';
+    return phase || '';
+};
+
 const ETIQUETA_FASE = {
     completado: 'Completado',
     en_proceso: 'En proceso',
@@ -87,13 +92,13 @@ const calcularFases = (logs, hayCarga) => {
     });
 };
 
-const FaseBadge = ({ value, fecha, detail, onClick }) => {
+const FaseBadge = ({ value, fecha, detail, onClick, active = false }) => {
     if (!value || value === '-') return <span className="mma-phase muted">—</span>;
     const label = value === 'EN_COLA' ? 'En cola' : value === 'EN_PROCESO' ? 'En proceso' : value;
     const clickable = typeof onClick === 'function';
     return (
         <span
-            className={`mma-phase ${value.toLowerCase().replaceAll('_', '-')} ${clickable ? 'clickable' : ''}`}
+            className={`mma-phase ${value.toLowerCase().replaceAll('_', '-')} ${clickable ? 'clickable' : ''} ${active ? 'live' : ''}`}
             role={clickable ? 'button' : undefined}
             tabIndex={clickable ? 0 : undefined}
             title={detail?.tooltip || detail?.mensaje_usuario || ''}
@@ -105,6 +110,7 @@ const FaseBadge = ({ value, fecha, detail, onClick }) => {
                 }
             } : undefined}
         >
+            {active && <FiChevronRight className="mma-cell-arrow" size={13} />}
             {label}
             {fecha && value === 'OK' && <small>{fmtFecha(fecha)}</small>}
         </span>
@@ -167,6 +173,7 @@ const MigracionMasivaArchivo = () => {
     const [qaRouteCode, setQaRouteCode] = useState('');
     const [qaResultado, setQaResultado] = useState(null);
     const [qaLoading, setQaLoading] = useState(false);
+    const [liveProgress, setLiveProgress] = useState(null);
 
     const {
         cargas,
@@ -179,6 +186,7 @@ const MigracionMasivaArchivo = () => {
         preflightOperacion,
         cargarEstadoOperacion,
         cargarAuditoria,
+        cargarProgresoLote,
         qaSaia,
         ejecutarLimpieza,
         cargarHistorialGlobal,
@@ -235,9 +243,34 @@ const MigracionMasivaArchivo = () => {
 
     const fases = useMemo(() => calcularFases(logs, !!carga), [logs, carga]);
     const faseActivaIndex = useMemo(() => resolverIndiceFaseActiva(carga, fases), [carga, fases]);
+    const livePhaseKey = normalizeLivePhase(liveProgress?.evento_actual?.detalle?.phase);
+    const liveDocumentId = liveProgress?.documento_actual?.id;
 
     const estadoUi = carga?.estado_proceso || (archivos.length ? 'PENDIENTE' : 'Inactivo');
     const estaActivo = ['PENDIENTE', 'EN_PROCESO'].includes(carga?.estado_proceso) || procesando;
+
+    useEffect(() => {
+        if (!carga?.id) {
+            setLiveProgress(null);
+            return undefined;
+        }
+        let cancelled = false;
+        const cargar = async () => {
+            try {
+                const data = await cargarProgresoLote(carga.id);
+                if (!cancelled) setLiveProgress(data);
+            } catch {
+                if (!cancelled) setLiveProgress(null);
+            }
+        };
+        cargar();
+        if (!estaActivo) return () => { cancelled = true; };
+        const intervalId = setInterval(cargar, 2500);
+        return () => {
+            cancelled = true;
+            clearInterval(intervalId);
+        };
+    }, [carga?.id, estaActivo, cargarProgresoLote]);
 
     const abrirDetalleFase = async (doc, phaseKey, event) => {
         event?.stopPropagation();
@@ -253,6 +286,7 @@ const MigracionMasivaArchivo = () => {
                 phaseKey,
                 phase,
                 diagnostico,
+                timeline: data?.timeline || diagnostico.logs || [],
                 loading: false,
             });
         } catch (error) {
@@ -651,6 +685,15 @@ const MigracionMasivaArchivo = () => {
                 ))}
             </div>
 
+            {liveProgress?.ultimo_evento && (
+                <div className="mma-live-strip">
+                    <span className={liveProgress.proceso_activo ? 'live-dot on' : 'live-dot'} />
+                    <strong>{liveProgress.documento_actual?.nombre_archivo || 'Sin documento activo'}</strong>
+                    <span>{liveProgress.evento_actual?.mensaje || liveProgress.ultimo_evento?.mensaje}</span>
+                    <small>{fmtFecha(liveProgress.evento_actual?.creado || liveProgress.ultimo_evento?.creado)}</small>
+                </div>
+            )}
+
             <div className="mma-tabs-panel">
                 <div className="mma-tabs">
                     <button className={tab === 'documentos' ? 'on' : ''} onClick={() => setTab('documentos')}>
@@ -968,14 +1011,20 @@ const MigracionMasivaArchivo = () => {
                                         [column.key]: faseValor(doc.fases?.[column.key], fallback[column.fallbackIndex]),
                                     }), {});
                                     const estado = fallback[5];
+                                    const rowLive = liveDocumentId && Number(doc.id) === Number(liveDocumentId);
                                     return (
-                                        <tr key={doc.id} onClick={() => documentos.length && setDetalleDoc(doc)} style={{ cursor: documentos.length ? 'pointer' : 'default' }}>
+                                        <tr
+                                            key={doc.id}
+                                            className={rowLive ? 'mma-live-row' : ''}
+                                            onClick={() => documentos.length && setDetalleDoc(doc)}
+                                            style={{ cursor: documentos.length ? 'pointer' : 'default' }}
+                                        >
                                             <td>{doc.nombre_original}</td>
-                                            <td><FaseBadge value={valoresFase.f1} detail={doc.fases_detalle?.f1} onClick={(event) => abrirDetalleFase(doc, 'f1', event)} /></td>
-                                            <td><FaseBadge value={valoresFase.f2} detail={doc.fases_detalle?.f2} onClick={(event) => abrirDetalleFase(doc, 'f2', event)} /></td>
-                                            <td><FaseBadge value={valoresFase.f3} detail={doc.fases_detalle?.f3} onClick={(event) => abrirDetalleFase(doc, 'f3', event)} /></td>
-                                            <td><FaseBadge value={valoresFase.f4} detail={doc.fases_detalle?.f4} onClick={(event) => abrirDetalleFase(doc, 'f4', event)} /></td>
-                                            <td><FaseBadge value={valoresFase.saia} detail={doc.fases_detalle?.saia} fecha={doc.modificado || doc.creado} onClick={(event) => abrirDetalleFase(doc, 'saia', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f1} detail={doc.fases_detalle?.f1} active={rowLive && livePhaseKey === 'f1'} onClick={(event) => abrirDetalleFase(doc, 'f1', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f2} detail={doc.fases_detalle?.f2} active={rowLive && livePhaseKey === 'f2'} onClick={(event) => abrirDetalleFase(doc, 'f2', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f3} detail={doc.fases_detalle?.f3} active={rowLive && livePhaseKey === 'f3'} onClick={(event) => abrirDetalleFase(doc, 'f3', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.f4} detail={doc.fases_detalle?.f4} active={rowLive && livePhaseKey === 'f4'} onClick={(event) => abrirDetalleFase(doc, 'f4', event)} /></td>
+                                            <td><FaseBadge value={valoresFase.saia} detail={doc.fases_detalle?.saia} active={rowLive && livePhaseKey === 'saia'} fecha={doc.modificado || doc.creado} onClick={(event) => abrirDetalleFase(doc, 'saia', event)} /></td>
                                             <td><span className={badgeClass(doc.estado_proceso)}>{estado}</span></td>
                                         </tr>
                                     );
@@ -1049,6 +1098,20 @@ const MigracionMasivaArchivo = () => {
                                                     )}
                                                     <small>{evidencia.tipo}</small>
                                                 </a>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                                {(detalleFase.timeline || []).length > 0 && (
+                                    <>
+                                        <p><strong>Timeline del documento</strong></p>
+                                        <div className="mma-doc-timeline">
+                                            {(detalleFase.timeline || []).map((log, index) => (
+                                                <div key={`${log.id || log.evento}-${index}`} className={`mma-timeline-item ${log.nivel?.toLowerCase()}`}>
+                                                    <span>{fmtFecha(log.creado)}</span>
+                                                    <strong>{log.evento}</strong>
+                                                    <p>{log.mensaje}</p>
+                                                </div>
                                             ))}
                                         </div>
                                     </>
